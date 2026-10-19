@@ -1,0 +1,70 @@
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+
+    flake-parts.url = "github:hercules-ci/flake-parts";
+
+    systems.url = "github:nix-systems/default";
+
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  outputs = {
+    flake-parts,
+    systems,
+    git-hooks,
+    ...
+  } @ inputs:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      imports = [git-hooks.flakeModule];
+
+      systems = import systems;
+
+      perSystem = {
+        pkgs,
+        config,
+        self',
+        ...
+      }: {
+        packages = {
+          tau = pkgs.callPackage ./default.nix {};
+          default = self'.packages.tau;
+        };
+
+        pre-commit.settings = {
+          hooks = {
+            alejandra.enable = true;
+
+            deadnix.enable = true;
+
+            statix.enable = true;
+
+            mdformat.enable = true;
+
+            clang-format.enable = true;
+
+            cmake-format = {
+              enable = true;
+              settings = {
+                inPlace = true;
+              };
+            };
+          };
+        };
+
+        devShells.default = pkgs.mkShell {
+          packages = with pkgs; [clang cmake ninja pkg-config] ++ config.pre-commit.settings.enabledPackages;
+
+          shellHook = ''
+            export CC=${pkgs.clang}/bin/clang
+            export CXX=${pkgs.clang}/bin/clang++
+
+            ${config.pre-commit.shellHook}
+          '';
+        };
+      };
+    };
+}
