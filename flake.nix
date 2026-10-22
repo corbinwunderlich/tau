@@ -58,6 +58,8 @@
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [clang cmake ninja pkg-config catch2_3] ++ config.pre-commit.settings.enabledPackages;
 
+          CMAKE_GENERATOR = "Ninja";
+
           shellHook = ''
             export CC=${pkgs.clang}/bin/clang
             export CXX=${pkgs.clang}/bin/clang++
