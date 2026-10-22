@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators_all.hpp>
 
-#include "tau/lexer/lexer.hpp"
+#include <tau/lexer/lexer.hpp>
 
 TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     SECTION("lex string literal") {

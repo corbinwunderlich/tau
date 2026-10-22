@@ -1,1 +1,1 @@
-#include "./lexer/lexer_test.cpp"
+#include "lexer/lexer_test.cpp"

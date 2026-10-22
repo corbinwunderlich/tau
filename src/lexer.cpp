@@ -6,7 +6,8 @@
 #include <system_error>
 #include <utility>
 
-#include "tau/lexer/lexer.hpp"
+#include <tau/lexer/lexer.hpp>
+#include <tau/lexer/token.hpp>
 
 using namespace lexer;
 
