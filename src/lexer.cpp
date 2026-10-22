@@ -6,10 +6,11 @@
 #include <system_error>
 #include <utility>
 
-#include "tau/lexer/base.hpp"
 #include "tau/lexer/lexer.hpp"
 
 using namespace lexer;
+
+enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
 
 Lexer::Lexer(std::string src) : src(std::move(src)) {};
 
