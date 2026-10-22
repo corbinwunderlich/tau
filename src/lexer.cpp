@@ -9,7 +9,11 @@
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/token.hpp>
 
-using namespace lexer;
+using std::nullopt;
+using std::optional;
+
+using lexer::Lexer;
+using lexer::Token;
 
 enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
 
@@ -17,38 +21,38 @@ Lexer::Lexer(std::string src) : src(std::move(src)) {};
 
 inline void Lexer::advance(size_t ahead) { this->pos += ahead; }
 
-inline void Lexer::advance(std::optional<char> &current, size_t ahead) {
+inline void Lexer::advance(optional<char> &current, size_t ahead) {
     this->pos += ahead;
     current = this->current();
 }
 
-std::optional<char> Lexer::current() {
+optional<char> Lexer::current() {
     if (this->pos >= this->src.length()) {
-        return std::nullopt;
+        return nullopt;
     }
 
     return this->src[this->pos];
 }
 
-std::optional<char> Lexer::peek(size_t ahead) {
+optional<char> Lexer::peek(size_t ahead) {
     const size_t index = this->pos + ahead;
 
     if (index >= this->src.length()) {
-        return std::nullopt;
+        return nullopt;
     }
 
     return this->src[index];
 }
 
 inline void Lexer::skipWhitespace() {
-    std::optional<char> current = this->current();
+    optional<char> current = this->current();
 
     while (current.has_value() && std::isspace(*current)) {
         this->advance(current);
     }
 }
 
-std::optional<char> Lexer::escapeCharacter(char character) {
+optional<char> Lexer::escapeCharacter(char character) {
     switch (character) {
     case '0':
         return '\0';
@@ -77,11 +81,11 @@ std::optional<char> Lexer::escapeCharacter(char character) {
                                              this->src.data() + this->pos + 2, hex, 16);
 
         if (ec != std::errc()) {
-            return std::nullopt;
+            return nullopt;
         }
 
         if (hex > 127) {
-            return std::nullopt;
+            return nullopt;
         }
 
         this->advance();
@@ -89,14 +93,14 @@ std::optional<char> Lexer::escapeCharacter(char character) {
         return hex;
     }
     default:
-        return std::nullopt;
+        return nullopt;
     }
 }
 
 inline Token Lexer::readIdentifierOrKeyword() {
     const size_t start = this->pos;
 
-    std::optional<char> current = this->current();
+    optional<char> current = this->current();
 
     while (current.has_value() && (std::isalnum(*current) || *current == '_')) {
         this->advance(current);
@@ -114,7 +118,7 @@ inline Token Lexer::readIdentifierOrKeyword() {
 inline Token Lexer::readComment(Lexer::CommentType type) {
     const size_t start = this->pos;
 
-    std::optional<char> current = this->current();
+    optional<char> current = this->current();
 
     switch (type) {
     case Lexer::CommentType::SingleLine:
@@ -138,12 +142,12 @@ inline Token Lexer::readComment(Lexer::CommentType type) {
     return token::Comment{.content = comment};
 }
 
-inline std::optional<std::string_view> Lexer::readStringLiteral() {
+inline optional<std::string_view> Lexer::readStringLiteral() {
     this->advance();
 
     const size_t start = this->pos;
 
-    std::optional<char> current = this->current();
+    optional<char> current = this->current();
     bool escaped = false;
 
     while (current.has_value() && (*current != '"' || escaped)) {
@@ -157,7 +161,7 @@ inline std::optional<std::string_view> Lexer::readStringLiteral() {
     }
 
     if (!current.has_value()) {
-        return std::nullopt;
+        return nullopt;
     }
 
     this->advance();
@@ -165,20 +169,20 @@ inline std::optional<std::string_view> Lexer::readStringLiteral() {
     return std::string_view(this->src).substr(start, this->pos - start);
 }
 
-inline std::optional<char> Lexer::readCharacterLiteral() {
+inline optional<char> Lexer::readCharacterLiteral() {
     this->advance();
 
-    std::optional<char> current = this->current();
+    optional<char> current = this->current();
 
     if (!current.has_value()) {
-        return std::nullopt;
+        return nullopt;
     }
 
     if (*current != '\\') {
         const char character = *current;
 
         if (this->advance(); this->current() != '\'') {
-            return std::nullopt;
+            return nullopt;
         }
 
         this->advance();
@@ -188,18 +192,18 @@ inline std::optional<char> Lexer::readCharacterLiteral() {
 
     this->advance(current);
 
-    std::optional<char> character = this->escapeCharacter(*current);
+    optional<char> character = this->escapeCharacter(*current);
 
     this->advance(2);
 
     return character;
 }
 
-inline std::optional<uint64_t> Lexer::readIntegerLiteral() {
-    std::optional<char> current = this->current();
+inline optional<uint64_t> Lexer::readIntegerLiteral() {
+    optional<char> current = this->current();
 
     if (!current.has_value()) {
-        return std::nullopt;
+        return nullopt;
     }
 
     size_t start = this->pos;
@@ -209,7 +213,7 @@ inline std::optional<uint64_t> Lexer::readIntegerLiteral() {
         this->advance(current);
 
         if (!current.has_value()) {
-            return std::nullopt;
+            return nullopt;
         }
 
         switch (*current) {
@@ -223,7 +227,7 @@ inline std::optional<uint64_t> Lexer::readIntegerLiteral() {
             base = Base::Binary;
             break;
         default:
-            return std::nullopt;
+            return nullopt;
         }
 
         this->advance(current);
@@ -270,21 +274,20 @@ inline std::optional<uint64_t> Lexer::readIntegerLiteral() {
                                          number, static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
-
-        return std::nullopt;
+        return nullopt;
     }
 
     return number;
 }
 
 inline Token Lexer::readLiteralToken() {
-    const std::optional<char> current = this->current();
+    const optional<char> current = this->current();
 
     if (!current.has_value()) {
         return token::Eof{};
     }
 
-    const std::optional<char> peek = this->peek(1);
+    const optional<char> peek = this->peek(1);
 
     switch (*current) {
     case '+':
@@ -383,7 +386,7 @@ inline Token Lexer::readLiteralToken() {
 Token Lexer::nextToken() {
     this->skipWhitespace();
 
-    std::optional<char> peek = this->peek();
+    optional<char> peek = this->peek();
 
     if (!peek.has_value()) {
         return token::Eof{};
@@ -396,7 +399,7 @@ Token Lexer::nextToken() {
     }
 
     if (std::isdigit(current)) {
-        const std::optional<uint64_t> number = this->readIntegerLiteral();
+        const optional<uint64_t> number = this->readIntegerLiteral();
 
         if (!number.has_value()) {
             return token::Invalid{};
@@ -406,7 +409,7 @@ Token Lexer::nextToken() {
     }
 
     if (current == '"') {
-        const std::optional<std::string_view> string = this->readStringLiteral();
+        const optional<std::string_view> string = this->readStringLiteral();
 
         if (!string.has_value()) {
             return token::Invalid{};
@@ -416,7 +419,7 @@ Token Lexer::nextToken() {
     }
 
     if (current == '\'') {
-        const std::optional<char> character = this->readCharacterLiteral();
+        const optional<char> character = this->readCharacterLiteral();
 
         if (!character.has_value()) {
             return token::Invalid{};
