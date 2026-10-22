@@ -18,6 +18,6 @@ in
     installPhase = ''
       mkdir -p $out/bin
 
-      cp -ar ./apps/compiler/tau $out/bin/tau
+      cp -ar ./apps/tau $out/bin/tau
     '';
   }

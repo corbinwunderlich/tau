@@ -23,13 +23,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 enable_testing()
 
-add_library(tau_core src/lexer/lexer.cpp)
-
-target_include_directories(
-  tau_core
-  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-         $<INSTALL_INTERFACE:include>
-  PRIVATE src)
-
-add_subdirectory(apps/compiler)
+add_subdirectory(src)
+add_subdirectory(apps)
 add_subdirectory(tests)
