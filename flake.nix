@@ -56,7 +56,7 @@
         };
 
         devShells.default = pkgs.mkShell {
-          packages = with pkgs; [clang cmake ninja pkg-config] ++ config.pre-commit.settings.enabledPackages;
+          packages = with pkgs; [clang cmake ninja pkg-config catch2_3] ++ config.pre-commit.settings.enabledPackages;
 
           shellHook = ''
             export CC=${pkgs.clang}/bin/clang

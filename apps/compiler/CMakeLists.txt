@@ -1,3 +1,3 @@
-add_executable(tau_cli main.cpp)
+add_executable(tau main.cpp)
 
-target_link_libraries(tau_cli PRIVATE tau_core)
+target_link_libraries(tau PRIVATE tau_core)
