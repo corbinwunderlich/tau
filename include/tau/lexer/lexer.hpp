@@ -40,6 +40,9 @@ class Lexer {
         {"fn", lexer::token::Fn{}},
         {"return", lexer::token::Return{}},
 
+        {"let", lexer::token::Let{}},
+        {"var", lexer::token::Var{}},
+
         {"if", lexer::token::If{}},
         {"else", lexer::token::Else{}},
 

@@ -8,6 +8,9 @@ namespace lexer::token {
 struct Fn {};
 struct Return {};
 
+struct Let {};
+struct Var {};
+
 struct Identifier {
     std::string_view name;
 };
@@ -83,10 +86,11 @@ struct Invalid {};
 namespace lexer {
 using namespace lexer::token;
 
-using Token = std::variant<
-    Fn, Return, Identifier, Comment, If, Else, While, For, Continue, Break, Str, Char, Int8, Uint8,
-    Int16, Uint16, Int32, Uint32, Int64, Uint64, Usize, StringLiteral, CharacterLiteral,
-    IntegerLiteral, LeftParen, RightParen, LeftBrace, RightBrace, LeftBracket, RightBracket, Equals,
-    DoubleEquals, NotEquals, LessThan, GreaterThan, LessThanEquals, GreaterThanEquals, LogicalOr,
-    LogicalAnd, Or, Xor, And, Plus, Minus, Asterisk, ForwardSlash, Eof, Invalid>;
+using Token =
+    std::variant<Fn, Return, Let, Var, Identifier, Comment, If, Else, While, For, Continue, Break,
+                 Str, Char, Int8, Uint8, Int16, Uint16, Int32, Uint32, Int64, Uint64, Usize,
+                 StringLiteral, CharacterLiteral, IntegerLiteral, LeftParen, RightParen, LeftBrace,
+                 RightBrace, LeftBracket, RightBracket, Equals, DoubleEquals, NotEquals, LessThan,
+                 GreaterThan, LessThanEquals, GreaterThanEquals, LogicalOr, LogicalAnd, Or, Xor,
+                 And, Plus, Minus, Asterisk, ForwardSlash, Eof, Invalid>;
 } // namespace lexer
