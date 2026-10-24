@@ -4,9 +4,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <utility>
 
-#include <tau/lexer/keywords.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/token.hpp>
 
