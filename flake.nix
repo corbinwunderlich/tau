@@ -60,6 +60,8 @@
 
           CMAKE_GENERATOR = "Ninja";
 
+          ASAN_OPTIONS = "detect_leaks=1:exitcode=1";
+
           shellHook = ''
             export CC=${pkgs.clang}/bin/clang
             export CXX=${pkgs.clang}/bin/clang++
