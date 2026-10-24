@@ -309,6 +309,7 @@ inline Token Lexer::readLiteralToken() {
             return this->readComment(CommentType::Multiline);
         }
 
+        this->advance();
         return token::ForwardSlash{};
     case '(':
         this->advance();
