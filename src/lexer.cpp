@@ -18,8 +18,6 @@ using lexer::Token;
 
 enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
 
-Lexer::Lexer(std::string src) : src(std::move(src)) {};
-
 inline void Lexer::advance(size_t ahead) { this->pos += ahead; }
 
 inline void Lexer::advance(optional<char> &current, size_t ahead) {
@@ -113,7 +111,7 @@ inline Token Lexer::readIdentifierOrKeyword() {
         return *keyword;
     }
 
-    return token::Identifier{.name = identifier};
+    return token::Identifier{identifier};
 }
 
 inline Token Lexer::readComment(Lexer::CommentType type) {
@@ -140,7 +138,7 @@ inline Token Lexer::readComment(Lexer::CommentType type) {
 
     const auto comment = std::string_view(this->src).substr(start, this->pos - start);
 
-    return token::Comment{.content = comment};
+    return token::Comment{comment};
 }
 
 inline optional<std::string_view> Lexer::readStringLiteral() {
@@ -407,7 +405,7 @@ Token Lexer::nextToken() {
             return token::Invalid{};
         }
 
-        return token::IntegerLiteral{.value = *number};
+        return token::IntegerLiteral{*number};
     }
 
     if (current == '"') {
@@ -417,7 +415,7 @@ Token Lexer::nextToken() {
             return token::Invalid{};
         }
 
-        return token::StringLiteral{.value = *string};
+        return token::StringLiteral{*string};
     }
 
     if (current == '\'') {
@@ -427,7 +425,7 @@ Token Lexer::nextToken() {
             return token::Invalid{};
         }
 
-        return token::CharacterLiteral{.value = *character};
+        return token::CharacterLiteral{*character};
     }
 
     return this->readLiteralToken();

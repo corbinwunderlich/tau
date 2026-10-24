@@ -4,13 +4,14 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #include "token.hpp"
 
 namespace lexer {
 class Lexer {
   public:
-    Lexer(std::string src);
+    Lexer(std::string s) : src(std::move(s)) {}
     Token nextToken();
 
   private:

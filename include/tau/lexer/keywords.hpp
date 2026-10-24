@@ -70,9 +70,7 @@ class Keywords {
     lookup(std::string_view identifier) noexcept {
         const Keyword *keyword = std::lower_bound(
             lookupTable.begin(), lookupTable.end(), identifier,
-            [](const struct Keyword &keyword, std::string_view text) {
-                return keyword.text < text;
-            });
+            [](const struct Keyword &k, std::string_view text) { return k.text < text; });
 
         if (keyword == lookupTable.end() || keyword->text != identifier) {
             return std::nullopt;
