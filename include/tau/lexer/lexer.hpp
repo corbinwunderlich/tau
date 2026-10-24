@@ -15,7 +15,7 @@ class Lexer {
     Token nextToken();
 
   private:
-    enum class CommentType : uint8_t { SingleLine, Multiline };
+    enum class CommentType : uint8_t { SingleLine, MultiLine };
 
     std::string src;
     size_t pos = 0;

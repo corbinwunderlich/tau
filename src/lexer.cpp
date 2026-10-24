@@ -124,7 +124,7 @@ inline Token Lexer::readComment(Lexer::CommentType type) {
         }
 
         break;
-    case Lexer::CommentType::Multiline:
+    case Lexer::CommentType::MultiLine:
         while (current.has_value() && !(current == '*' && this->peek(1) == '/')) {
             this->advance(current);
         }
@@ -302,7 +302,7 @@ inline Token Lexer::readLiteralToken() {
         }
 
         if (peek == '*') {
-            return this->readComment(CommentType::Multiline);
+            return this->readComment(CommentType::MultiLine);
         }
 
         this->advance();

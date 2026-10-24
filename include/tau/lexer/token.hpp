@@ -86,7 +86,7 @@ TOKENS(AS_STRUCT)
 } // namespace lexer::token
 
 namespace lexer {
-#define AS_VARIANT(Type, Fields) lexer::token::Type,
+#define AS_VARIANT(Token, ...) lexer::token::Token,
 struct Token : std::variant<TOKENS(AS_VARIANT) std::monostate> {
     using variant::variant;
 };
