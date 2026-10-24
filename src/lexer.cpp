@@ -6,6 +6,7 @@
 #include <system_error>
 #include <utility>
 
+#include <tau/lexer/keywords.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/token.hpp>
 
@@ -108,8 +109,8 @@ inline Token Lexer::readIdentifierOrKeyword() {
 
     const auto identifier = std::string_view(this->src).substr(start, this->pos - start);
 
-    if (const auto keyword = this->keywords.find(identifier); keyword != this->keywords.end()) {
-        return keyword->second;
+    if (const auto keyword = Keywords::lookup(identifier); keyword.has_value()) {
+        return *keyword;
     }
 
     return token::Identifier{.name = identifier};

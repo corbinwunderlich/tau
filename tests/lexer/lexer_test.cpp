@@ -116,12 +116,12 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     }
 
     SECTION("lex keyword") {
-        Lexer lexer("if");
+        Lexer lexer("usize");
 
         auto token = lexer.nextToken();
 
         REQUIRE_NOTHROW(std::get<token::Eof>(lexer.nextToken()));
-        REQUIRE_NOTHROW(std::get<token::If>(token));
+        REQUIRE_NOTHROW(std::get<token::Usize>(token));
     }
 
     SECTION("lex literal token") {
