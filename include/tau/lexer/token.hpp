@@ -7,75 +7,75 @@
 #include <type_traits>
 #include <variant>
 
-#define KEYWORDS(X)                                                                                \
-    X(Fn, {})                                                                                      \
-    X(Return, {})                                                                                  \
-                                                                                                   \
-    X(Let, {})                                                                                     \
-    X(Var, {})                                                                                     \
-                                                                                                   \
-    X(Identifier, { std::string_view name; })                                                      \
-                                                                                                   \
-    X(Comment, { std::string_view content; })                                                      \
-                                                                                                   \
-    X(If, {})                                                                                      \
-    X(Else, {})                                                                                    \
-                                                                                                   \
-    X(While, {})                                                                                   \
-    X(For, {})                                                                                     \
-    X(Continue, {})                                                                                \
-    X(Break, {})                                                                                   \
-                                                                                                   \
-    X(Str, {})                                                                                     \
-    X(Char, {})                                                                                    \
-                                                                                                   \
-    X(Int8, {})                                                                                    \
-    X(Uint8, {})                                                                                   \
-    X(Int16, {})                                                                                   \
-    X(Uint16, {})                                                                                  \
-    X(Int32, {})                                                                                   \
-    X(Uint32, {})                                                                                  \
-    X(Int64, {})                                                                                   \
-    X(Uint64, {})                                                                                  \
+#define KEYWORDS(X)                                                                                  \
+    X(Fn, {})                                                                                        \
+    X(Return, {})                                                                                    \
+                                                                                                     \
+    X(Let, {})                                                                                       \
+    /*X(Var, {})*/                                                                                   \
+                                                                                                     \
+    X(Identifier, { std::string_view name; })                                                        \
+                                                                                                     \
+    X(Comment, { std::string_view content; })                                                        \
+                                                                                                     \
+    /*X(If, {})                                                                                      \
+    X(Else, {})                                                                                      \
+                                                                                                   \ \
+    X(While, {})                                                                                     \
+    X(For, {})                                                                                       \
+    X(Continue, {})                                                                                  \
+    X(Break, {})*/                                                                                   \
+                                                                                                     \
+    X(Str, {})                                                                                       \
+    X(Char, {})                                                                                      \
+                                                                                                     \
+    X(Int8, {})                                                                                      \
+    X(Uint8, {})                                                                                     \
+    X(Int16, {})                                                                                     \
+    X(Uint16, {})                                                                                    \
+    X(Int32, {})                                                                                     \
+    X(Uint32, {})                                                                                    \
+    X(Int64, {})                                                                                     \
+    X(Uint64, {})                                                                                    \
     X(Usize, {})
 
-#define TOKENS(X)                                                                                  \
-    KEYWORDS(X)                                                                                    \
-                                                                                                   \
-    X(StringLiteral, { std::string_view value; })                                                  \
-    X(CharacterLiteral, { char value; })                                                           \
-    X(IntegerLiteral, { std::uint64_t value; })                                                    \
-                                                                                                   \
-    X(LeftParen, {})                                                                               \
-    X(RightParen, {})                                                                              \
-    X(LeftBrace, {})                                                                               \
-    X(RightBrace, {})                                                                              \
-    X(LeftBracket, {})                                                                             \
-    X(RightBracket, {})                                                                            \
-                                                                                                   \
-    X(Equals, {})                                                                                  \
-    X(DoubleEquals, {})                                                                            \
-    X(NotEquals, {})                                                                               \
-                                                                                                   \
-    X(LessThan, {})                                                                                \
-    X(GreaterThan, {})                                                                             \
-    X(LessThanEquals, {})                                                                          \
-    X(GreaterThanEquals, {})                                                                       \
-                                                                                                   \
-    X(LogicalOr, {})                                                                               \
-    X(LogicalAnd, {})                                                                              \
-                                                                                                   \
-    X(Or, {})                                                                                      \
-    X(Xor, {})                                                                                     \
-    X(And, {})                                                                                     \
-                                                                                                   \
-    X(Plus, {})                                                                                    \
-    X(Minus, {})                                                                                   \
-    X(Asterisk, {})                                                                                \
-    X(ForwardSlash, {})                                                                            \
-                                                                                                   \
-    X(Eof, {})                                                                                     \
-                                                                                                   \
+#define TOKENS(X)                                                                                    \
+    KEYWORDS(X)                                                                                      \
+                                                                                                     \
+    X(StringLiteral, { std::string_view value; })                                                    \
+    X(CharacterLiteral, { char value; })                                                             \
+    X(IntegerLiteral, { std::uint64_t value; })                                                      \
+                                                                                                     \
+    X(LeftParen, {})                                                                                 \
+    X(RightParen, {})                                                                                \
+    X(LeftBrace, {})                                                                                 \
+    X(RightBrace, {})                                                                                \
+    X(LeftBracket, {})                                                                               \
+    X(RightBracket, {})                                                                              \
+                                                                                                     \
+    X(Equals, {})                                                                                    \
+    /*X(DoubleEquals, {})                                                                            \
+    X(NotEquals, {})                                                                                 \
+                                                                                                   \ \
+    X(LessThan, {})                                                                                  \
+    X(GreaterThan, {})                                                                               \
+    X(LessThanEquals, {})                                                                            \
+    X(GreaterThanEquals, {})                                                                         \
+                                                                                                   \ \
+    X(LogicalOr, {})                                                                                 \
+    X(LogicalAnd, {})                                                                                \
+                                                                                                   \ \
+    X(Or, {})                                                                                        \
+    X(Xor, {})                                                                                       \
+    X(And, {})*/                                                                                     \
+                                                                                                     \
+    X(Plus, {})                                                                                      \
+    X(Minus, {})                                                                                     \
+    X(Asterisk, {})                                                                                  \
+    X(ForwardSlash, {})                                                                              \
+                                                                                                     \
+    X(Eof, {})                                                                                       \
+                                                                                                     \
     X(Invalid, {})
 
 namespace lexer::token {

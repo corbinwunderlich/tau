@@ -151,15 +151,6 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         REQUIRE_NOTHROW(std::get<token::Equals>(token));
     }
 
-    SECTION("lex double equals") {
-        Lexer lexer("==");
-
-        auto token = lexer.next_token();
-
-        REQUIRE_NOTHROW(std::get<token::Eof>(lexer.next_token()));
-        REQUIRE_NOTHROW(std::get<token::DoubleEquals>(token));
-    }
-
     SECTION("lex single-line comment") {
         Lexer lexer("// this is first comment\n// this is second comment");
 

@@ -324,56 +324,58 @@ inline auto Lexer::read_literal_token() -> Token {
         this->advance();
         return token::RightBracket{};
     case '=':
-        if (peek != '=') {
-            this->advance();
-            return token::Equals{};
-        }
-
-        this->advance(2);
-        return token::DoubleEquals{};
-    case '!':
-        if (peek == '=') {
-            this->advance();
-            return token::NotEquals{};
-        }
-
-        this->advance(2);
-        return token::Invalid{};
-    case '<':
-        if (peek != '=') {
-            this->advance();
-            return token::LessThan{};
-        }
-
-        this->advance(2);
-        return token::LessThanEquals{};
-    case '>':
-        if (peek != '=') {
-            this->advance();
-            return token::GreaterThan{};
-        }
-
-        this->advance(2);
-        return token::GreaterThanEquals{};
-    case '|':
-        if (peek != '|') {
-            this->advance();
-            return token::Or{};
-        }
-
-        this->advance(2);
-        return token::LogicalOr{};
-    case '&':
-        if (peek != '&') {
-            this->advance();
-            return token::And{};
-        }
-
-        this->advance(2);
-        return token::LogicalAnd{};
-    case '^':
         this->advance();
-        return token::Xor{};
+        return token::Equals{};
+        // if (peek != '=') {
+        //     this->advance();
+        //     return token::Equals{};
+        // }
+        //
+        // this->advance(2);
+        // return token::DoubleEquals{};
+    // case '!':
+    //     if (peek == '=') {
+    //         this->advance();
+    //         return token::NotEquals{};
+    //     }
+    //
+    //     this->advance(2);
+    //     return token::Invalid{};
+    // case '<':
+    //     if (peek != '=') {
+    //         this->advance();
+    //         return token::LessThan{};
+    //     }
+    //
+    //     this->advance(2);
+    //     return token::LessThanEquals{};
+    // case '>':
+    //     if (peek != '=') {
+    //         this->advance();
+    //         return token::GreaterThan{};
+    //     }
+    //
+    //     this->advance(2);
+    //     return token::GreaterThanEquals{};
+    // case '|':
+    //     if (peek != '|') {
+    //         this->advance();
+    //         return token::Or{};
+    //     }
+    //
+    //     this->advance(2);
+    //     return token::LogicalOr{};
+    // case '&':
+    //     if (peek != '&') {
+    //         this->advance();
+    //         return token::And{};
+    //     }
+    //
+    //     this->advance(2);
+    //     return token::LogicalAnd{};
+    // case '^':
+    //     this->advance();
+    //     return token::Xor{};
     default:
         return token::Invalid{};
     }
