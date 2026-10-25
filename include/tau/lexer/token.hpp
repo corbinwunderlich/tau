@@ -108,7 +108,8 @@ class Keywords {
         return data;
     }
 
-    template <typename T, typename = void> struct IsIter : std::false_type {};
+    template <typename T, typename = void>
+    struct IsIter : std::false_type {};
 
     template <typename T>
     struct IsIter<
@@ -130,7 +131,8 @@ class Keywords {
         return hash;
     }
 
-    template <size_t N> static constexpr auto hash_keyword(const char (&keyword)[N]) -> uint32_t {
+    template <size_t N>
+    static constexpr auto hash_keyword(const char (&keyword)[N]) -> uint32_t {
         return hash(lowercase_string(keyword));
     }
 
