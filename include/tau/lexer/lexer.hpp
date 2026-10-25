@@ -12,7 +12,7 @@ namespace lexer {
 class Lexer {
   public:
     Lexer(std::string s) : src(std::move(s)) {}
-    Token next_token();
+    auto next_token() -> Token;
 
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
@@ -22,18 +22,18 @@ class Lexer {
 
     void advance(size_t ahead = 1);
     void advance(std::optional<char> &current, size_t ahead = 1);
-    std::optional<char> current();
-    std::optional<char> peek(size_t ahead = 0);
+    auto current() -> std::optional<char>;
+    auto peek(size_t ahead = 0) -> std::optional<char>;
 
     void skip_whitespace();
 
-    std::optional<char> escape_character(char character);
+    auto escape_character(char character) -> std::optional<char>;
 
-    Token read_identifier_or_keyword();
-    Token read_comment(CommentType type);
-    std::optional<std::string_view> read_string_literal();
-    std::optional<char> read_character_literal();
-    std::optional<uint64_t> read_integer_literal();
-    Token read_literal_token();
+    auto read_identifier_or_keyword() -> Token;
+    auto read_comment(CommentType type) -> Token;
+    auto read_string_literal() -> std::optional<std::string_view>;
+    auto read_character_literal() -> std::optional<char>;
+    auto read_integer_literal() -> std::optional<uint64_t>;
+    auto read_literal_token() -> Token;
 };
 } // namespace lexer

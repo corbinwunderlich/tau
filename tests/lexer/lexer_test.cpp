@@ -17,7 +17,7 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     }
 
     SECTION("lex string literal with escaped double quote") {
-        Lexer lexer("\"test\\\"\"");
+        Lexer lexer(R"("test\"")");
 
         auto token = lexer.next_token();
 

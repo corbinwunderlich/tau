@@ -46,6 +46,15 @@
 
             clang-format.enable = true;
 
+            clang-tidy = let
+              build = pkgs.runCommandCC "cmake-build" {buildInputs = [pkgs.cmake pkgs.catch2_3];} ''
+                cmake ${./.} -B $out
+              '';
+            in {
+              enable = true;
+              entry = "${pkgs.clang-tools}/bin/clang-tidy -p ${build} --fix";
+            };
+
             cmake-format = {
               enable = true;
               settings = {

@@ -93,12 +93,12 @@ struct Token : std::variant<TOKENS(AS_VARIANT) std::monostate> {
 
 class Keywords {
   private:
-    static constexpr char lowercase_character(char c) {
-        return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
+    static constexpr auto lowercase_character(char c) -> char {
+        return (c >= 'A' && c <= 'Z') ? static_cast<char>(c + ('a' - 'A')) : c;
     }
 
     template <size_t N>
-    static constexpr std::array<char, N - 1> lowercase_string(const char (&str)[N]) {
+    static constexpr auto lowercase_string(const char (&str)[N]) -> std::array<char, N - 1> {
         std::array<char, N - 1> data{};
 
         for (size_t i = 0; i < N - 1; i++) {
@@ -108,31 +108,35 @@ class Keywords {
         return data;
     }
 
-    template <typename T, typename = void> struct is_iter : std::false_type {};
+    template <typename T, typename = void> struct IsIter : std::false_type {};
 
     template <typename T>
-    struct is_iter<
+    struct IsIter<
         T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
         : std::true_type {};
 
-    template <typename T, typename = std::enable_if_t<is_iter<T>::value>>
-    static constexpr uint32_t hash(T identifier) {
-        uint32_t hash = 2166136261;
+    static constexpr uint32_t fnv_a1_base = 0x811c9dc5;
+    static constexpr uint32_t fnv_a1_prime = 0x01000193;
 
-        for (const char c : identifier) {
-            hash ^= static_cast<uint32_t>(c);
-            hash *= 16777619;
+    template <typename T, typename = std::enable_if_t<IsIter<T>::value>>
+    static constexpr auto hash(T identifier) -> uint32_t {
+        uint32_t hash = fnv_a1_base;
+
+        for (const char byte : identifier) {
+            hash ^= static_cast<uint32_t>(byte);
+            hash *= fnv_a1_prime;
         }
 
         return hash;
     }
 
-    template <size_t N> static constexpr uint32_t hash_keyword(const char (&keyword)[N]) {
+    template <size_t N> static constexpr auto hash_keyword(const char (&keyword)[N]) -> uint32_t {
         return hash(lowercase_string(keyword));
     }
 
     template <size_t N>
-    static constexpr bool matches(std::string_view identifier, const std::array<char, N> keyword) {
+    static constexpr auto matches(std::string_view identifier, const std::array<char, N> keyword)
+        -> bool {
         if (identifier.size() != N) {
             return false;
         }
@@ -149,7 +153,7 @@ class Keywords {
     }
 
   public:
-    static constexpr std::optional<Token> lookup(std::string_view identifier) {
+    static constexpr auto lookup(std::string_view identifier) -> std::optional<Token> {
         const uint32_t identifier_hash = hash(identifier);
 
         switch (identifier_hash) {

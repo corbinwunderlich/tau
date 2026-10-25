@@ -1,0 +1,27 @@
+Checks: -*,bugprone-*,modernize-*,-modernize-avoid-c-arrays,performance-*,readability-*,-clang-diagnostic-*
+
+CheckOptions:
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key: readability-identifier-naming.ConstantParameterCase,
+    value: lower_case
+
+  - key: readability-identifier-length.MinimumParameterNameLength
+    value: 0
+
+  - key: readability-function-size.IgnoreMacros
+    value: true
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: true
