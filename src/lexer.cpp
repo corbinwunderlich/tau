@@ -44,7 +44,7 @@ optional<char> Lexer::peek(size_t ahead) {
 inline void Lexer::skipWhitespace() {
     optional<char> current = this->current();
 
-    while (current.has_value() && std::isspace(*current)) {
+    while (current.has_value() && std::isspace(static_cast<unsigned char>(*current))) {
         this->advance(current);
     }
 }
@@ -99,7 +99,8 @@ inline Token Lexer::readIdentifierOrKeyword() {
 
     optional<char> current = this->current();
 
-    while (current.has_value() && (std::isalnum(*current) || *current == '_')) {
+    while (current.has_value() &&
+           (std::isalnum(static_cast<unsigned char>(*current)) || *current == '_')) {
         this->advance(current);
     }
 
@@ -249,13 +250,13 @@ inline optional<uint64_t> Lexer::readIntegerLiteral() {
 
             break;
         case Base::Decimal:
-            if (std::isdigit(*current)) {
+            if (std::isdigit(static_cast<unsigned char>(*current))) {
                 continue;
             }
 
             break;
         case Base::Hexadecimal:
-            if (std::isxdigit(*current)) {
+            if (std::isxdigit(static_cast<unsigned char>(*current))) {
                 continue;
             }
 
@@ -392,11 +393,11 @@ Token Lexer::nextToken() {
 
     char current = *peek;
 
-    if (std::isalpha(current) || current == '_') {
+    if (std::isalpha(static_cast<unsigned char>(current)) || current == '_') {
         return this->readIdentifierOrKeyword();
     }
 
-    if (std::isdigit(current)) {
+    if (std::isdigit(static_cast<unsigned char>(current))) {
         const optional<uint64_t> number = this->readIntegerLiteral();
 
         if (!number.has_value()) {
