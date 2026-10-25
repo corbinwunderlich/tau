@@ -2,7 +2,6 @@
 
 #include <array>
 #include <cstdint>
-#include <iterator>
 #include <optional>
 #include <string_view>
 #include <type_traits>
@@ -94,30 +93,30 @@ struct Token : std::variant<TOKENS(AS_VARIANT) std::monostate> {
 
 class Keywords {
   private:
-    static constexpr char lowercaseCharacter(char c) {
+    static constexpr char lowercase_character(char c) {
         return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
     }
 
     template <size_t N>
-    static constexpr std::array<char, N - 1> lowercaseString(const char (&str)[N]) {
+    static constexpr std::array<char, N - 1> lowercase_string(const char (&str)[N]) {
         std::array<char, N - 1> data{};
 
         for (size_t i = 0; i < N - 1; i++) {
-            data[i] = lowercaseCharacter(str[i]);
+            data[i] = lowercase_character(str[i]);
         }
 
         return data;
     }
 
-    template <typename T, typename = void> struct isIter : std::false_type {};
+    template <typename T, typename = void> struct is_iter : std::false_type {};
 
     template <typename T>
-    struct isIter<T, std::void_t<decltype(std::begin(std::declval<T &>())),
-                                 decltype(std::end(std::declval<T &>()))>> : std::true_type {};
+    struct is_iter<
+        T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
+        : std::true_type {};
 
-    template <typename T> static constexpr uint32_t hash(T identifier) {
-        static_assert(isIter<T>::value, "keyword (T) must be an iterable string");
-
+    template <typename T, typename = std::enable_if_t<is_iter<T>::value>>
+    static constexpr uint32_t hash(T identifier) {
         uint32_t hash = 2166136261;
 
         for (const char c : identifier) {
@@ -128,8 +127,8 @@ class Keywords {
         return hash;
     }
 
-    template <size_t N> static constexpr uint32_t hashKeyword(const char (&keyword)[N]) {
-        return hash(lowercaseString(keyword));
+    template <size_t N> static constexpr uint32_t hash_keyword(const char (&keyword)[N]) {
+        return hash(lowercase_string(keyword));
     }
 
     template <size_t N>
@@ -151,12 +150,12 @@ class Keywords {
 
   public:
     static constexpr std::optional<Token> lookup(std::string_view identifier) {
-        const uint32_t identifierHash = hash(identifier);
+        const uint32_t identifier_hash = hash(identifier);
 
-        switch (identifierHash) {
+        switch (identifier_hash) {
 #define AS_SWITCH_CASE(Token, ...)                                                                 \
-    case hashKeyword(#Token):                                                                      \
-        if (matches(identifier, lowercaseString(#Token))) {                                        \
+    case hash_keyword(#Token):                                                                     \
+        if (matches(identifier, lowercase_string(#Token))) {                                       \
             return lexer::token::Token{};                                                          \
         }                                                                                          \
         break;

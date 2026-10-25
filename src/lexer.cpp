@@ -41,7 +41,7 @@ optional<char> Lexer::peek(size_t ahead) {
     return this->src[index];
 }
 
-inline void Lexer::skipWhitespace() {
+inline void Lexer::skip_whitespace() {
     optional<char> current = this->current();
 
     while (current.has_value() && std::isspace(static_cast<unsigned char>(*current))) {
@@ -49,7 +49,7 @@ inline void Lexer::skipWhitespace() {
     }
 }
 
-optional<char> Lexer::escapeCharacter(char character) {
+optional<char> Lexer::escape_character(char character) {
     switch (character) {
     case '0':
         return '\0';
@@ -94,7 +94,7 @@ optional<char> Lexer::escapeCharacter(char character) {
     }
 }
 
-inline Token Lexer::readIdentifierOrKeyword() {
+inline Token Lexer::read_identifier_or_keyword() {
     const size_t start = this->pos;
 
     optional<char> current = this->current();
@@ -113,7 +113,7 @@ inline Token Lexer::readIdentifierOrKeyword() {
     return token::Identifier{identifier};
 }
 
-inline Token Lexer::readComment(Lexer::CommentType type) {
+inline Token Lexer::read_comment(Lexer::CommentType type) {
     const size_t start = this->pos;
 
     optional<char> current = this->current();
@@ -140,7 +140,7 @@ inline Token Lexer::readComment(Lexer::CommentType type) {
     return token::Comment{comment};
 }
 
-inline optional<std::string_view> Lexer::readStringLiteral() {
+inline optional<std::string_view> Lexer::read_string_literal() {
     this->advance();
 
     const size_t start = this->pos;
@@ -167,7 +167,7 @@ inline optional<std::string_view> Lexer::readStringLiteral() {
     return std::string_view(this->src).substr(start, this->pos - start);
 }
 
-inline optional<char> Lexer::readCharacterLiteral() {
+inline optional<char> Lexer::read_character_literal() {
     this->advance();
 
     optional<char> current = this->current();
@@ -190,14 +190,14 @@ inline optional<char> Lexer::readCharacterLiteral() {
 
     this->advance(current);
 
-    optional<char> character = this->escapeCharacter(*current);
+    optional<char> character = this->escape_character(*current);
 
     this->advance(2);
 
     return character;
 }
 
-inline optional<uint64_t> Lexer::readIntegerLiteral() {
+inline optional<uint64_t> Lexer::read_integer_literal() {
     optional<char> current = this->current();
 
     if (!current.has_value()) {
@@ -278,7 +278,7 @@ inline optional<uint64_t> Lexer::readIntegerLiteral() {
     return number;
 }
 
-inline Token Lexer::readLiteralToken() {
+inline Token Lexer::read_literal_token() {
     const optional<char> current = this->current();
 
     if (!current.has_value()) {
@@ -299,11 +299,11 @@ inline Token Lexer::readLiteralToken() {
         return token::Asterisk{};
     case '/':
         if (peek == '/') {
-            return this->readComment(CommentType::SingleLine);
+            return this->read_comment(CommentType::SingleLine);
         }
 
         if (peek == '*') {
-            return this->readComment(CommentType::MultiLine);
+            return this->read_comment(CommentType::MultiLine);
         }
 
         this->advance();
@@ -382,8 +382,8 @@ inline Token Lexer::readLiteralToken() {
     }
 }
 
-Token Lexer::nextToken() {
-    this->skipWhitespace();
+Token Lexer::next_token() {
+    this->skip_whitespace();
 
     optional<char> peek = this->peek();
 
@@ -394,11 +394,11 @@ Token Lexer::nextToken() {
     char current = *peek;
 
     if (std::isalpha(static_cast<unsigned char>(current)) || current == '_') {
-        return this->readIdentifierOrKeyword();
+        return this->read_identifier_or_keyword();
     }
 
     if (std::isdigit(static_cast<unsigned char>(current))) {
-        const optional<uint64_t> number = this->readIntegerLiteral();
+        const optional<uint64_t> number = this->read_integer_literal();
 
         if (!number.has_value()) {
             return token::Invalid{};
@@ -408,7 +408,7 @@ Token Lexer::nextToken() {
     }
 
     if (current == '"') {
-        const optional<std::string_view> string = this->readStringLiteral();
+        const optional<std::string_view> string = this->read_string_literal();
 
         if (!string.has_value()) {
             return token::Invalid{};
@@ -418,7 +418,7 @@ Token Lexer::nextToken() {
     }
 
     if (current == '\'') {
-        const optional<char> character = this->readCharacterLiteral();
+        const optional<char> character = this->read_character_literal();
 
         if (!character.has_value()) {
             return token::Invalid{};
@@ -427,5 +427,5 @@ Token Lexer::nextToken() {
         return token::CharacterLiteral{*character};
     }
 
-    return this->readLiteralToken();
+    return this->read_literal_token();
 }
