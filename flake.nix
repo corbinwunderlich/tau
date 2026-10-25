@@ -52,6 +52,22 @@
                 inPlace = true;
               };
             };
+
+            tests = let
+              script = let
+                cmake = "${pkgs.cmake}/bin/cmake";
+                ctest = "${pkgs.cmake}/bin/ctest";
+              in
+                pkgs.writeShellScript "tests" ''
+                  ${cmake} -B build
+                  ${cmake} --build build
+                  ${ctest} --test-dir build
+                '';
+            in {
+              enable = true;
+              entry = toString script;
+              pass_filenames = false;
+            };
           };
         };
 
