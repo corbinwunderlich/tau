@@ -50,9 +50,14 @@
               build = pkgs.runCommandCC "cmake-build" {buildInputs = [pkgs.cmake pkgs.catch2_3];} ''
                 cmake ${./.} -B $out
               '';
+
+              script = pkgs.writeShellScript "clang-tidy" ''
+                ${pkgs.libclang}/bin/run-clang-tidy -j $(${pkgs.getconf}/bin/getconf _NPROCESSORS_ONLN) -fix -p ${build}
+              '';
             in {
               enable = true;
-              entry = "${pkgs.clang-tools}/bin/clang-tidy -p ${build} --fix";
+              entry = toString script;
+              require_serial = true;
             };
 
             cmake-format = {
