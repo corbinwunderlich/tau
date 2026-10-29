@@ -17,6 +17,30 @@ using lexer::Token;
 
 enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
 
+auto Lexer::peek_token() -> Token {
+    if (!this->next.has_value()) {
+        this->next = this->lex_next_token();
+    }
+
+    return *this->next;
+}
+
+auto Lexer::next_token() -> Token {
+    if (!this->next.has_value()) {
+        return this->lex_next_token();
+    }
+
+    Token token = *this->next;
+
+    this->next.reset();
+
+    return token;
+}
+
+auto Lexer::completed() const -> bool {
+    return !this->next.has_value() && this->pos >= this->src.size();
+}
+
 inline void Lexer::advance(size_t ahead) { this->pos += ahead; }
 
 inline void Lexer::advance(optional<char> &current, size_t ahead) {
@@ -24,15 +48,15 @@ inline void Lexer::advance(optional<char> &current, size_t ahead) {
     current = this->current();
 }
 
-auto Lexer::current() -> optional<char> {
-    if (this->pos >= this->src.length()) {
+auto Lexer::current() const -> optional<char> {
+    if (this->completed()) {
         return nullopt;
     }
 
     return this->src[this->pos];
 }
 
-auto Lexer::peek(size_t ahead) -> optional<char> {
+auto Lexer::peek(size_t ahead) const -> optional<char> {
     const size_t index = this->pos + ahead;
 
     if (index >= this->src.length()) {
@@ -95,13 +119,26 @@ auto Lexer::escape_character(char character) -> optional<char> {
     }
 }
 
+inline auto Lexer::read_type() -> Token {
+    const size_t start = this->pos;
+
+    optional<char> current = this->current();
+
+    while (current.has_value() && std::isalnum(static_cast<unsigned char>(*current)) != 0) {
+        this->advance(current);
+    }
+
+    const auto identifier = std::string_view(this->src).substr(start, this->pos - start);
+
+    return token::Type{{}, identifier};
+}
+
 inline auto Lexer::read_identifier_or_keyword() -> Token {
     const size_t start = this->pos;
 
     optional<char> current = this->current();
 
-    while (current.has_value() &&
-           ((std::isalnum(static_cast<unsigned char>(*current)) != 0) || *current == '_')) {
+    while (current.has_value() && std::isalnum(static_cast<unsigned char>(*current)) != 0) {
         this->advance(current);
     }
 
@@ -111,7 +148,7 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
         return *keyword;
     }
 
-    return token::Identifier{identifier};
+    return token::Identifier{{}, identifier};
 }
 
 inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
@@ -138,7 +175,7 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
 
     const auto comment = std::string_view(this->src).substr(start, this->pos - start);
 
-    return token::Comment{comment};
+    return token::Comment{{}, comment};
 }
 
 inline auto Lexer::read_string_literal() -> optional<std::string_view> {
@@ -285,45 +322,31 @@ inline auto Lexer::read_literal_token() -> Token {
     const optional<char> peek = this->peek(1);
 
     switch (*current) {
-    case '+':
+    case token::Semicolon::text():
         this->advance();
-        return token::Plus{};
-    case '-':
+        return token::Semicolon{};
+    case token::Comma::text():
         this->advance();
-        return token::Minus{};
-    case '*':
-        this->advance();
-        return token::Asterisk{};
-    case '/':
-        if (peek == '/') {
-            return this->read_comment(CommentType::SingleLine);
-        }
-
-        if (peek == '*') {
-            return this->read_comment(CommentType::MultiLine);
-        }
-
-        this->advance();
-        return token::ForwardSlash{};
-    case '(':
+        return token::Comma{};
+    case token::LeftParen::text():
         this->advance();
         return token::LeftParen{};
-    case ')':
+    case token::RightParen::text():
         this->advance();
         return token::RightParen{};
-    case '{':
+    case token::LeftBrace::text():
         this->advance();
         return token::LeftBrace{};
-    case '}':
+    case token::RightBrace::text():
         this->advance();
         return token::RightBrace{};
-    case '[':
+    case token::LeftBracket::text():
         this->advance();
         return token::LeftBracket{};
-    case ']':
+    case token::RightBracket::text():
         this->advance();
         return token::RightBracket{};
-    case '=':
+    case token::Equals::text():
         this->advance();
         return token::Equals{};
         // if (peek != '=') {
@@ -376,12 +399,32 @@ inline auto Lexer::read_literal_token() -> Token {
     // case '^':
     //     this->advance();
     //     return token::Xor{};
+    case token::Plus::text():
+        this->advance();
+        return token::Plus{};
+    case token::Minus::text():
+        this->advance();
+        return token::Minus{};
+    case token::Asterisk::text():
+        this->advance();
+        return token::Asterisk{};
+    case token::ForwardSlash::text():
+        if (peek == '/') {
+            return this->read_comment(CommentType::SingleLine);
+        }
+
+        if (peek == '*') {
+            return this->read_comment(CommentType::MultiLine);
+        }
+
+        this->advance();
+        return token::ForwardSlash{};
     default:
         return token::Invalid{};
     }
 }
 
-auto Lexer::next_token() -> Token {
+auto Lexer::lex_next_token() -> Token {
     this->skip_whitespace();
 
     optional<char> peek = this->peek();
@@ -392,7 +435,11 @@ auto Lexer::next_token() -> Token {
 
     char current = *peek;
 
-    if ((std::isalpha(static_cast<unsigned char>(current)) != 0) || current == '_') {
+    if (std::isalpha(static_cast<unsigned char>(current)) != 0) {
+        if (static_cast<bool>(std::isupper(static_cast<unsigned char>(current)))) {
+            return this->read_type();
+        }
+
         return this->read_identifier_or_keyword();
     }
 
@@ -403,7 +450,7 @@ auto Lexer::next_token() -> Token {
             return token::Invalid{};
         }
 
-        return token::IntegerLiteral{*number};
+        return token::IntegerLiteral{{}, *number};
     }
 
     if (current == '"') {
@@ -413,7 +460,7 @@ auto Lexer::next_token() -> Token {
             return token::Invalid{};
         }
 
-        return token::StringLiteral{*string};
+        return token::StringLiteral{{}, *string};
     }
 
     if (current == '\'') {
@@ -423,7 +470,7 @@ auto Lexer::next_token() -> Token {
             return token::Invalid{};
         }
 
-        return token::CharacterLiteral{*character};
+        return token::CharacterLiteral{{}, *character};
     }
 
     return this->read_literal_token();

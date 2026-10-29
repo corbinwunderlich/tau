@@ -13,9 +13,11 @@ target_precompile_headers(
   libtau
   PUBLIC
   <array>
+  <memory>
   <optional>
   <string>
   <string_view>
-  <utility>
   <type_traits>
-  <variant>)
+  <utility>
+  <variant>
+  <vector>)
