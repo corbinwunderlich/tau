@@ -14,13 +14,33 @@ namespace token = lexer::token;
 using parser::Parser;
 namespace error = parser::error;
 
+auto Parser::next_token() -> lexer::Token {
+    this->pos++;
+
+    if (this->pos >= this->tokens.size()) {
+        return lexer::token::Eof{};
+    }
+
+    return this->tokens[this->pos];
+}
+
+auto Parser::peek_token() -> lexer::Token {
+    const size_t index = this->pos + 1;
+
+    if (index >= this->tokens.size()) {
+        return lexer::token::Eof{};
+    }
+
+    return this->tokens[index];
+}
+
 auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> FunctionCall {
-    parser.lexer.next_token().expect<token::LeftParen>();
+    parser.next_token().expect<token::LeftParen>();
 
     auto params = std::vector<Expr>();
 
     while (true) {
-        const Token token = parser.lexer.next_token();
+        const Token token = parser.next_token();
 
         if (token.is<token::RightParen>()) {
             break;
@@ -28,7 +48,7 @@ auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> 
 
         auto expression = Expr::parse(parser);
 
-        bool is_last_param = parser.lexer.next_token().visit(
+        bool is_last_param = parser.next_token().visit(
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
             [](auto &&arg) -> bool {
@@ -55,56 +75,52 @@ auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> 
     auto allocated_params = std::make_unique<Expr[]>(param_count);
     std::move(params.begin(), params.end(), allocated_params.get());
 
-    return FunctionCall{Ident(parser.ident_pool, identifier), std::move(allocated_params),
-                        param_count};
+    return FunctionCall{Ident(identifier), std::move(allocated_params), param_count};
 }
 
 auto node::Assignment::parse(Parser &parser, token::Identifier identifier) -> Assignment {
-    parser.lexer.next_token().expect<token::Equals>();
+    parser.next_token().expect<token::Equals>();
 
-    return Assignment{Ident(parser.ident_pool, identifier),
-                      std::make_unique<Expr>(Expr::parse(parser))};
+    return Assignment{Ident(identifier), std::make_unique<Expr>(Expr::parse(parser))};
 }
 
 auto node::Factor::parse(Parser &parser) -> Factor {
-    const Token token = parser.lexer.peek_token();
+    const Token token = parser.peek_token();
 
     Factor factor = token.visit(
         [&parser](token::Identifier identifier) -> Factor {
-            parser.lexer.next_token();
+            parser.next_token();
 
-            return parser.lexer.peek_token().visit(
+            return parser.peek_token().visit(
                 [&parser, &identifier](token::LeftParen) -> Factor {
                     return std::make_unique<FunctionCall>(FunctionCall::parse(parser, identifier));
                 },
                 [&parser, &identifier](token::Equals) -> Factor {
                     return Assignment::parse(parser, identifier);
                 },
-                [&parser, &identifier](auto &&) -> Factor {
-                    return Ident(parser.ident_pool, identifier);
-                });
+                [&identifier](auto &&) -> Factor { return Ident(identifier); });
         },
         [&parser](token::StringLiteral str) -> Factor {
-            parser.lexer.next_token();
+            parser.next_token();
 
-            return String(parser.string_pool, str);
+            return String{std::move(str.value)};
         },
         [&parser](token::CharacterLiteral character) -> Factor {
-            parser.lexer.next_token();
+            parser.next_token();
 
             return Character{character.value};
         },
         [&parser](token::IntegerLiteral integer) -> Factor {
-            parser.lexer.next_token();
+            parser.next_token();
 
             return Integer{integer.value};
         },
         [&parser](token::LeftParen) -> Factor {
-            parser.lexer.next_token();
+            parser.next_token();
 
             auto expression = std::make_unique<Expr>(Expr::parse(parser));
 
-            parser.lexer.next_token().expect<token::RightParen>();
+            parser.next_token().expect<token::RightParen>();
 
             return Group{std::move(expression)};
         },
@@ -123,13 +139,13 @@ auto node::Factor::parse(Parser &parser) -> Factor {
 auto node::Term::parse(Parser &parser) -> Term {
     auto factor = Factor::parse(parser);
 
-    const Token token = parser.lexer.peek_token();
+    const Token token = parser.peek_token();
 
     if (token.is_not<token::Asterisk, token::ForwardSlash>()) {
         return factor;
     }
 
-    const Token operation = parser.lexer.next_token();
+    const Token operation = parser.next_token();
 
     auto lhs = std::make_unique<Factor>(std::move(factor));
     auto rhs = std::make_unique<Term>(Term::parse(parser));
@@ -153,13 +169,13 @@ auto node::Term::parse(Parser &parser) -> Term {
 auto node::Expr::parse(Parser &parser) -> Expr {
     auto term = Term::parse(parser);
 
-    const Token token = parser.lexer.peek_token();
+    const Token token = parser.peek_token();
 
     if (token.is_not<token::Plus, token::Minus>()) {
         return term;
     }
 
-    const Token operation = parser.lexer.next_token();
+    const Token operation = parser.next_token();
 
     auto lhs = std::make_unique<Term>(std::move(term));
     auto rhs = std::make_unique<Expr>(Expr::parse(parser));
@@ -180,11 +196,11 @@ auto node::Expr::parse(Parser &parser) -> Expr {
 }
 
 auto node::Block::parse(Parser &parser) -> Block {
-    parser.lexer.next_token().expect<token::LeftBrace>();
+    parser.next_token().expect<token::LeftBrace>();
 
     auto statements = std::vector<Stmt>();
 
-    while (parser.lexer.peek_token().is_not<token::RightBrace, token::Eof>()) {
+    while (parser.peek_token().is_not<token::RightBrace, token::Eof>()) {
         auto statement = node::Stmt::parse(parser);
 
         statements.push_back(std::move(statement));
@@ -199,36 +215,36 @@ auto node::Block::parse(Parser &parser) -> Block {
 }
 
 auto node::VarDecl::parse(Parser &parser) -> VarDecl {
-    parser.lexer.next_token().expect<token::Var>();
+    parser.next_token().expect<token::Var>();
 
-    const auto ident = parser.lexer.next_token().get<token::Identifier>();
-    const auto type = parser.lexer.next_token().get<token::Type>();
+    const auto ident = parser.next_token().get<token::Identifier>();
+    const auto type = parser.next_token().get<token::Type>();
 
-    parser.lexer.next_token().expect<token::Semicolon>();
+    parser.next_token().expect<token::Semicolon>();
 
-    return VarDecl{Ident(parser.ident_pool, ident), Type(parser.ident_pool, type)};
+    return VarDecl{Ident(ident), Type(type)};
 }
 
 auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
-    parser.lexer.next_token().expect<token::Fn>();
+    parser.next_token().expect<token::Fn>();
 
-    const auto ident = parser.lexer.next_token().get<token::Identifier>();
+    const auto ident = parser.next_token().get<token::Identifier>();
 
-    parser.lexer.next_token().expect<token::LeftParen>();
+    parser.next_token().expect<token::LeftParen>();
 
     auto params = std::vector<Param>();
 
     while (true) {
-        const Token token = parser.lexer.next_token();
+        const Token token = parser.next_token();
 
         if (token.is<token::RightParen>()) {
             break;
         }
 
         const auto param_ident = token.get<token::Identifier>();
-        const auto param_type = parser.lexer.next_token().get<token::Type>();
+        const auto param_type = parser.next_token().get<token::Type>();
 
-        bool is_last_param = parser.lexer.next_token().visit(
+        bool is_last_param = parser.next_token().visit(
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
             [](auto &&arg) -> bool {
@@ -241,11 +257,10 @@ auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
                                              token::Comma::text());
             });
 
-        params.emplace_back(Ident(parser.ident_pool, param_ident),
-                            Type(parser.ident_pool, param_type));
+        params.emplace_back(Ident(param_ident), Type(param_type));
 
         if (params.size() > error::TooManyParameters::max_parameters()) {
-            throw error::TooManyParameters(ident.name);
+            throw error::TooManyParameters(parser.pool->resolve(ident.index));
         }
 
         if (is_last_param) {
@@ -255,29 +270,29 @@ auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
 
     params.shrink_to_fit();
 
-    const auto return_type = parser.lexer.next_token().get<token::Type>();
+    const auto return_type = parser.next_token().get<token::Type>();
 
     const auto param_count = static_cast<uint8_t>(params.size());
 
     auto allocated_params = std::make_unique<Param[]>(param_count);
     std::move(params.begin(), params.end(), allocated_params.get());
 
-    return FunctionDecl{Ident(parser.ident_pool, ident), std::move(allocated_params), param_count,
-                        Type(parser.ident_pool, return_type), Block::parse(parser)};
+    return FunctionDecl{Ident(ident), std::move(allocated_params), param_count, Type(return_type),
+                        Block::parse(parser)};
 }
 
 auto node::Return::parse(parser::Parser &parser) -> Return {
-    parser.lexer.next_token().expect<token::Return>();
+    parser.next_token().expect<token::Return>();
 
     auto expression = std::make_unique<Expr>(Expr::parse(parser));
 
-    parser.lexer.next_token().expect<token::Semicolon>();
+    parser.next_token().expect<token::Semicolon>();
 
     return Return{std::move(expression)};
 }
 
 auto node::Stmt::parse(Parser &parser) -> Stmt {
-    const Token token = parser.lexer.peek_token();
+    const Token token = parser.peek_token();
 
     Stmt statement = token.visit(
         [&parser](token::LeftBrace) -> Stmt { return Block::parse(parser); },
@@ -287,7 +302,7 @@ auto node::Stmt::parse(Parser &parser) -> Stmt {
             try {
                 auto expr = std::make_unique<Expr>(Expr::parse(parser));
 
-                parser.lexer.next_token().expect<token::Semicolon>();
+                parser.next_token().expect<token::Semicolon>();
 
                 return expr;
             } catch (...) {
@@ -304,7 +319,7 @@ auto node::Stmt::parse(Parser &parser) -> Stmt {
 }
 
 auto node::Decl::parse(Parser &parser) -> Decl {
-    const Token token = parser.lexer.peek_token();
+    const Token token = parser.peek_token();
 
     Decl decl = token.visit(
         [&parser](token::Var) -> Decl { return node::VarDecl::parse(parser); },
@@ -326,7 +341,7 @@ auto node::Decl::parse(Parser &parser) -> Decl {
 auto Parser::parse() && -> ast::Ast {
     std::vector<node::Decl> declarations;
 
-    while (!this->lexer.completed()) {
+    while (this->pos < this->tokens.size()) {
         declarations.push_back(node::Decl::parse(*this));
     }
 

@@ -7,10 +7,9 @@
 #include <variant>
 
 #include <tau/lexer/lexer.hpp>
+#include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
 #include <tau/parser/error.hpp>
-
-#include "pool.hpp"
 
 namespace parser {
 class Parser;
@@ -23,49 +22,36 @@ struct Stmt;
 
 class Ident {
   private:
-    size_t pool_index;
+    size_t index;
 
   public:
     Ident() = default;
-    Ident(pool::IdentPool &pool, std::string_view s) : pool_index(pool.insert(s)) {}
-    Ident(pool::IdentPool &pool, lexer::token::Identifier ident) : Ident(pool, ident.name) {};
+    Ident(lexer::token::Identifier identifier) : index(identifier.index) {};
 
-    [[nodiscard]] auto name(const pool::IdentPool &pool) const -> std::string_view {
-        const pool::Node &node = pool.get(this->pool_index);
+    [[nodiscard]] auto name(const lexer::Pool &pool) const -> std::string_view {
+        const std::string_view name = pool.resolve(this->index);
 
-        return node.to_string();
+        return name;
     }
 };
 
 class Type {
   private:
-    size_t pool_index;
+    size_t index;
 
   public:
     Type() = default;
-    Type(pool::IdentPool &pool, std::string_view s) : pool_index(pool.insert(s)) {}
-    Type(pool::IdentPool &pool, lexer::token::Type type) : Type(pool, type.identifier) {};
+    Type(lexer::token::Type type) : index(type.index) {};
 
-    [[nodiscard]] auto name(const pool::IdentPool &pool) const -> std::string_view {
-        const pool::Node &node = pool.get(this->pool_index);
+    [[nodiscard]] auto name(const lexer::Pool &pool) const -> std::string_view {
+        const std::string_view name = pool.resolve(this->index);
 
-        return node.to_string();
+        return name;
     }
 };
 
-class String {
-  private:
-    size_t pool_index;
-
-  public:
-    String(pool::StringPool &pool, std::string_view s) : pool_index(pool.insert(s)) {};
-    String(pool::StringPool &pool, lexer::token::StringLiteral s) : String(pool, s.value) {};
-
-    [[nodiscard]] auto value(const pool::StringPool &pool) const -> std::string_view {
-        const pool::Node &node = pool.get(this->pool_index);
-
-        return node.to_string();
-    }
+struct String {
+    std::string value;
 };
 
 struct Character {

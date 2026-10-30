@@ -18,6 +18,7 @@ target_precompile_headers(
   <string>
   <string_view>
   <type_traits>
+  <unordered_map>
   <utility>
   <variant>
   <vector>)

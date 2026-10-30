@@ -3,6 +3,7 @@
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
@@ -64,14 +65,14 @@
     KEYWORDS(X)                                                                                    \
     SYMBOLS(X)                                                                                     \
                                                                                                    \
-    X(Type, "type", std::string_view identifier;)                                                  \
-    X(Identifier, "identifier", std::string_view name;)                                            \
+    X(Type, "type", size_t index;)                                                                 \
+    X(Identifier, "identifier", size_t index;)                                                     \
                                                                                                    \
     X(Comment, "comment", std::string_view content;)                                               \
                                                                                                    \
-    X(StringLiteral, "string literal", std::string_view value;)                                    \
+    X(StringLiteral, "string literal", std::string value;)                                         \
     X(CharacterLiteral, "character literal", char value;)                                          \
-    X(IntegerLiteral, "integer literal", std::uint64_t value;)                                     \
+    X(IntegerLiteral, "integer literal", uint64_t value;)                                          \
                                                                                                    \
     X(Eof, "end of file", BLANK_TOKEN)                                                             \
     X(Invalid, "invalid", BLANK_TOKEN)
@@ -243,7 +244,7 @@ class Keywords {
     }
 
   public:
-    static constexpr auto lookup(std::string_view identifier) -> std::optional<Token> {
+    static auto lookup(std::string_view identifier) -> std::optional<Token> {
         const uint32_t identifier_hash = hash(identifier);
 
         switch (identifier_hash) {

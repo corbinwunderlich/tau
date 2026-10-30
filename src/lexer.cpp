@@ -2,43 +2,40 @@
 #include <charconv>
 #include <limits>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <system_error>
 
 #include <tau/lexer/lexer.hpp>
+#include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
 
 using std::nullopt;
 using std::optional;
 
 using lexer::Lexer;
-using lexer::Token;
 
 enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
 
-auto Lexer::peek_token() -> Token {
-    if (!this->next.has_value()) {
-        this->next = this->lex_next_token();
+auto Lexer::lex() -> TokenStream {
+    TokenStream token_stream;
+
+    while (this->pos < this->srcs->length()) {
+        Token token = this->lex_next_token();
+
+        token_stream.push_back(token);
     }
 
-    return *this->next;
+    token_stream.shrink_to_fit();
+
+    return token_stream;
 }
 
-auto Lexer::next_token() -> Token {
-    if (!this->next.has_value()) {
-        return this->lex_next_token();
-    }
-
-    Token token = *this->next;
-
-    this->next.reset();
-
-    return token;
+auto Lexer::extract_sources() noexcept -> std::unique_ptr<src::Sources> {
+    return std::move(this->srcs);
 }
 
-auto Lexer::completed() const -> bool {
-    return !this->next.has_value() && this->pos >= this->src.size();
+auto Lexer::extract_pool() noexcept -> std::unique_ptr<lexer::Pool> {
+    return std::move(this->pool);
 }
 
 inline void Lexer::advance(size_t ahead) { this->pos += ahead; }
@@ -48,28 +45,18 @@ inline void Lexer::advance(optional<char> &current, size_t ahead) {
     current = this->current();
 }
 
-auto Lexer::current() const -> optional<char> {
-    if (this->completed()) {
-        return nullopt;
-    }
-
-    return this->src[this->pos];
-}
+auto Lexer::current() const -> optional<char> { return this->srcs->at(this->pos); }
 
 auto Lexer::peek(size_t ahead) const -> optional<char> {
     const size_t index = this->pos + ahead;
 
-    if (index >= this->src.length()) {
-        return nullopt;
-    }
-
-    return this->src[index];
+    return this->srcs->at(index);
 }
 
 inline void Lexer::skip_whitespace() {
     optional<char> current = this->current();
 
-    while (current.has_value() && (std::isspace(static_cast<unsigned char>(*current)) != 0)) {
+    while (current.has_value() && std::isspace(static_cast<unsigned char>(*current)) != 0) {
         this->advance(current);
     }
 }
@@ -99,8 +86,8 @@ auto Lexer::escape_character(char character) -> optional<char> {
 
         char hex = 0;
 
-        const auto [_, ec] = std::from_chars(this->src.data() + this->pos,
-                                             this->src.data() + this->pos + 2, hex, 16);
+        const auto [_, ec] = std::from_chars(this->srcs->data() + this->pos,
+                                             this->srcs->data() + this->pos + 2, hex, 16);
 
         if (ec != std::errc()) {
             return nullopt;
@@ -128,9 +115,10 @@ inline auto Lexer::read_type() -> Token {
         this->advance(current);
     }
 
-    const auto identifier = std::string_view(this->src).substr(start, this->pos - start);
+    const std::string_view identifier = this->srcs->range(start, this->pos - start);
+    const size_t index = this->pool->insert(identifier);
 
-    return token::Type{{}, identifier};
+    return token::Type{{}, index};
 }
 
 inline auto Lexer::read_identifier_or_keyword() -> Token {
@@ -142,13 +130,15 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
         this->advance(current);
     }
 
-    const auto identifier = std::string_view(this->src).substr(start, this->pos - start);
+    const std::string_view identifier = this->srcs->range(start, this->pos - start);
 
     if (const auto keyword = Keywords::lookup(identifier); keyword.has_value()) {
         return *keyword;
     }
 
-    return token::Identifier{{}, identifier};
+    const size_t index = this->pool->insert(identifier);
+
+    return token::Identifier{{}, index};
 }
 
 inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
@@ -173,12 +163,12 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
         break;
     }
 
-    const auto comment = std::string_view(this->src).substr(start, this->pos - start);
+    const auto comment = this->srcs->range(start, this->pos - start);
 
     return token::Comment{{}, comment};
 }
 
-inline auto Lexer::read_string_literal() -> optional<std::string_view> {
+inline auto Lexer::read_string_literal() -> optional<std::string> {
     this->advance();
 
     const size_t start = this->pos;
@@ -198,7 +188,7 @@ inline auto Lexer::read_string_literal() -> optional<std::string_view> {
 
     this->advance();
 
-    return std::string_view(this->src).substr(start, this->pos - start);
+    return std::string(this->srcs->range(start, this->pos - start - 1));
 }
 
 inline auto Lexer::read_character_literal() -> optional<char> {
@@ -302,7 +292,7 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
 
     uint64_t number;
 
-    const auto [_, ec] = std::from_chars(this->src.data() + start, this->src.data() + this->pos,
+    const auto [_, ec] = std::from_chars(this->srcs->data() + start, this->srcs->data() + this->pos,
                                          number, static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
@@ -454,7 +444,7 @@ auto Lexer::lex_next_token() -> Token {
     }
 
     if (current == '"') {
-        const optional<std::string_view> string = this->read_string_literal();
+        const optional<std::string> string = this->read_string_literal();
 
         if (!string.has_value()) {
             return token::Invalid{};

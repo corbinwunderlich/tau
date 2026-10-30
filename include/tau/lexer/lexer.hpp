@@ -3,26 +3,34 @@
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <utility>
+#include <vector>
+
+#include <tau/lexer/pool.hpp>
+#include <tau/src/src.hpp>
 
 #include "token.hpp"
 
 namespace lexer {
+using TokenStream = std::vector<Token>;
+
 class Lexer {
   public:
-    Lexer(std::string s) : src(std::move(s)) {}
-    auto peek_token() -> Token;
-    auto next_token() -> Token;
-    [[nodiscard]] auto completed() const -> bool;
+    Lexer(src::Sources sources) : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
+    Lexer(std::string source) : Lexer(src::Sources(std::move(source))) {}
+
+    [[nodiscard]] auto lex() -> TokenStream;
+
+    [[nodiscard]] auto extract_sources() noexcept -> std::unique_ptr<src::Sources>;
+    [[nodiscard]] auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
 
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
-    const std::string src;
-    size_t pos = 0;
+    std::unique_ptr<src::Sources> srcs;
+    std::unique_ptr<lexer::Pool> pool = std::make_unique<lexer::Pool>(lexer::Pool{});
 
-    std::optional<Token> next = std::nullopt;
+    size_t pos = 0;
 
     void advance(size_t ahead = 1);
     void advance(std::optional<char> &current, size_t ahead = 1);
@@ -36,7 +44,7 @@ class Lexer {
     auto read_type() -> Token;
     auto read_identifier_or_keyword() -> Token;
     auto read_comment(CommentType type) -> Token;
-    auto read_string_literal() -> std::optional<std::string_view>;
+    auto read_string_literal() -> std::optional<std::string>;
     auto read_character_literal() -> std::optional<char>;
     auto read_integer_literal() -> std::optional<uint64_t>;
     auto read_literal_token() -> Token;
