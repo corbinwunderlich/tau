@@ -7,4 +7,22 @@ UseTab: Never
 ColumnLimit: 100
 PenaltyBreakAssignment: 100
 BreakTemplateDeclarations: Yes
+
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: ^"([^.]*)\.(hpp|h)"
+    Priority: 1
+    SortPriority: 5
+  - Regex: ^<tau/([^.]*)\.(hpp|h)>
+    Priority: 2
+    SortPriority: 4
+  - Regex: ^<catch2/([^.]*)\.(hpp|h)>
+    Priority: 3
+    SortPriority: 2
+  - Regex: ^<([^.]*)\.(hpp|h)>
+    Priority: 4
+    SortPriority: 3
+  - Regex: <.*
+    Priority: 5
+    SortPriority: 1
 ---
