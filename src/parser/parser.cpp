@@ -55,9 +55,9 @@ auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
             [](auto&& arg) -> bool {
                 const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-                throw error::UnexpectedToken(token.text(),
-                                             token::RightParen::text(),
-                                             token::Comma::text());
+                throw error::UnexpectedToken(token.description(),
+                                             token::RightParen::description(),
+                                             token::Comma::description());
             });
 
         params.push_back(std::move(expression));
@@ -130,8 +130,9 @@ auto node::Factor::parse(Parser& parser) -> Factor {
         [](auto&& arg) -> Factor {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Fn::text(),
-                                         token::Var::text());
+            throw error::UnexpectedToken(token.description(),
+                                         token::Fn::description(),
+                                         token::Var::description());
         });
 
     return factor;
@@ -161,8 +162,9 @@ auto node::Term::parse(Parser& parser) -> Term {
         [](auto&& arg) -> Term {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Asterisk::text(),
-                                         token::ForwardSlash::text());
+            throw error::UnexpectedToken(token.description(),
+                                         token::Asterisk::description(),
+                                         token::ForwardSlash::description());
         });
 
     return term;
@@ -192,8 +194,9 @@ auto node::Expr::parse(Parser& parser) -> Expr {
         [](auto&& arg) -> Expr {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Plus::text(),
-                                         token::Minus::text());
+            throw error::UnexpectedToken(token.description(),
+                                         token::Plus::description(),
+                                         token::Minus::description());
         });
 
     return expression;
@@ -254,9 +257,9 @@ auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
             [](auto&& arg) -> bool {
                 const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-                throw error::UnexpectedToken(token.text(),
-                                             token::RightParen::text(),
-                                             token::Comma::text());
+                throw error::UnexpectedToken(token.description(),
+                                             token::RightParen::description(),
+                                             token::Comma::description());
             });
 
         params.emplace_back(Ident(param_ident), Type(param_type));
@@ -310,7 +313,7 @@ auto node::Stmt::parse(Parser& parser) -> Stmt {
             } catch (...) {
                 const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-                throw error::UnexpectedToken(token.text(), "statement");
+                throw error::UnexpectedToken(token.description(), "statement");
             }
         });
 
@@ -329,8 +332,9 @@ auto node::Decl::parse(Parser& parser) -> Decl {
         [](auto&& arg) -> Decl {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Fn::text(),
-                                         token::Var::text());
+            throw error::UnexpectedToken(token.description(),
+                                         token::Fn::description(),
+                                         token::Var::description());
         });
 
     return decl;

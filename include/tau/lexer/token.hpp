@@ -86,16 +86,16 @@ struct Token {
   public:
     friend Derived;
 
-    static constexpr auto text() noexcept { return Derived::text(); }
+    static constexpr auto description() noexcept {
+        return Derived::description();
+    }
 };
 
-#define AS_STRUCT(Type, Text, ...)                              \
-    struct Type : public Token<Type> {                          \
-        friend struct Token<Type>;                              \
-                                                                \
-        __VA_ARGS__                                             \
-                                                                \
-        static constexpr auto text() noexcept { return Text; }; \
+#define AS_STRUCT(Type, Text, ...)                                     \
+    struct Type : public Token<Type> {                                 \
+        __VA_ARGS__                                                    \
+                                                                       \
+        static constexpr auto description() noexcept { return Text; }; \
     };
 TOKENS(AS_STRUCT)
 #undef AS_STRUCT
@@ -158,7 +158,8 @@ class Token : public detail::TokenVariant {
             return this->visit([](auto&& arg) -> T {
                 const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-                throw parser::error::UnexpectedToken(token.text(), T::text());
+                throw parser::error::UnexpectedToken(token.description(),
+                                                     T::description());
             });
         }
     }
@@ -182,7 +183,8 @@ class Token : public detail::TokenVariant {
         this->visit([](auto&& arg) -> void {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw parser::error::UnexpectedToken(token.text(), T::text());
+            throw parser::error::UnexpectedToken(token.description(),
+                                                 T::description());
         });
     }
 };

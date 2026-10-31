@@ -332,31 +332,31 @@ inline auto Lexer::read_literal_token() -> Token {
     const optional<char> peek = this->peek(1);
 
     switch (*current) {
-        case token::Semicolon::text():
+        case token::Semicolon::description():
             this->advance();
             return token::Semicolon{};
-        case token::Comma::text():
+        case token::Comma::description():
             this->advance();
             return token::Comma{};
-        case token::LeftParen::text():
+        case token::LeftParen::description():
             this->advance();
             return token::LeftParen{};
-        case token::RightParen::text():
+        case token::RightParen::description():
             this->advance();
             return token::RightParen{};
-        case token::LeftBrace::text():
+        case token::LeftBrace::description():
             this->advance();
             return token::LeftBrace{};
-        case token::RightBrace::text():
+        case token::RightBrace::description():
             this->advance();
             return token::RightBrace{};
-        case token::LeftBracket::text():
+        case token::LeftBracket::description():
             this->advance();
             return token::LeftBracket{};
-        case token::RightBracket::text():
+        case token::RightBracket::description():
             this->advance();
             return token::RightBracket{};
-        case token::Equals::text():
+        case token::Equals::description():
             this->advance();
             return token::Equals{};
             // if (peek != '=') {
@@ -409,16 +409,16 @@ inline auto Lexer::read_literal_token() -> Token {
         // case '^':
         //     this->advance();
         //     return token::Xor{};
-        case token::Plus::text():
+        case token::Plus::description():
             this->advance();
             return token::Plus{};
-        case token::Minus::text():
+        case token::Minus::description():
             this->advance();
             return token::Minus{};
-        case token::Asterisk::text():
+        case token::Asterisk::description():
             this->advance();
             return token::Asterisk{};
-        case token::ForwardSlash::text():
+        case token::ForwardSlash::description():
             if (peek == '/') {
                 return this->read_comment(CommentType::SingleLine);
             }
