@@ -3,25 +3,27 @@ cmake_minimum_required(VERSION 3.12)
 file(READ "${CMAKE_CURRENT_LIST_DIR}/.version" VERSION_FILE)
 string(STRIP "${VERSION_FILE}" VERSION_FILE)
 
-project(
-  tau
-  VERSION ${VERSION_FILE}
-  LANGUAGES CXX)
+project(tau VERSION ${VERSION_FILE} LANGUAGES CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS
-    ON
-    CACHE INTERNAL "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 if(CMAKE_EXPORT_COMPILE_COMMANDS)
-  set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
-      ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+    set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES
+        ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES}
+    )
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wshadow)
+add_compile_options(
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Wconversion
+    -Wshadow
+)
 
 enable_testing()
 

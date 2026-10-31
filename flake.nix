@@ -60,11 +60,16 @@
               require_serial = true;
             };
 
-            cmake-format = {
+            gersemi = let
+              script = pkgs.writeShellScript "gersemi" ''
+                catch2_defs=$(find ${pkgs.catch2_3}/lib/cmake/Catch2)
+
+                ${pkgs.gersemi}/bin/gersemi --in-place --list-expansion favour-expansion --definitions $catch2_defs $@
+              '';
+            in {
               enable = true;
-              settings = {
-                inPlace = true;
-              };
+              entry = toString script;
+              files = "\\.cmake$|CMakeLists.txt";
             };
 
             tests = let
