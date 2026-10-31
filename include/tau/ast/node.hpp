@@ -21,10 +21,10 @@ struct Expr;
 struct Stmt;
 
 class Ident {
-   private:
+  private:
     size_t index;
 
-   public:
+  public:
     Ident() = default;
     Ident(lexer::token::Identifier identifier) : index(identifier.index) {};
 
@@ -36,10 +36,10 @@ class Ident {
 };
 
 class Type {
-   private:
+  private:
     size_t index;
 
-   public:
+  public:
     Type() = default;
     Type(lexer::token::Type type) : index(type.index) {};
 

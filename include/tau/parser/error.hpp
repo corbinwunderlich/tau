@@ -9,7 +9,7 @@
 
 namespace parser::error {
 class UnexpectedToken : public std::runtime_error {
-   private:
+  private:
     static auto quote(std::string_view sv) -> std::string {
         return std::string().append(sv);
     }
@@ -38,7 +38,7 @@ class UnexpectedToken : public std::runtime_error {
         return message;
     }
 
-   public:
+  public:
     template <typename Found, typename Expected>
     UnexpectedToken(Found found, Expected&& expected)
         : std::runtime_error(this->build_message(found, expected)) {};
@@ -51,7 +51,7 @@ class UnexpectedToken : public std::runtime_error {
 };
 
 class TooManyParameters : public std::runtime_error {
-   private:
+  private:
     static auto build_message(std::string_view identifier) -> std::string {
         std::string message = "function ";
 
@@ -62,7 +62,7 @@ class TooManyParameters : public std::runtime_error {
         return message;
     }
 
-   public:
+  public:
     TooManyParameters(std::string_view identifier)
         : std::runtime_error(build_message(identifier)) {};
 

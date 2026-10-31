@@ -3,10 +3,10 @@
 #include <optional>
 namespace src {
 class Sources {
-   private:
+  private:
     const std::string source;
 
-   public:
+  public:
     Sources(std::string source_file) : source(std::move(source_file)) {};
     [[nodiscard]] auto length() const noexcept -> size_t {
         return this->source.length();

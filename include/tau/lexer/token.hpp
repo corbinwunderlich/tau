@@ -80,10 +80,10 @@
 namespace lexer::token {
 template <typename Derived>
 struct Token {
-   private:
+  private:
     Token() = default;
 
-   public:
+  public:
     friend Derived;
 
     static constexpr auto text() noexcept { return Derived::text(); }
@@ -122,7 +122,7 @@ using TokenVariant = typename TokenBuilder<
 
 namespace lexer {
 class Token : public detail::TokenVariant {
-   private:
+  private:
     template <class... Ts>
     struct Overload : Ts... {
         using Ts::operator()...;
@@ -131,7 +131,7 @@ class Token : public detail::TokenVariant {
     template <class... Ts>
     Overload(Ts...) -> Overload<Ts...>;
 
-   public:
+  public:
     using variant::variant;
 
     template <typename... Visitors>
@@ -188,7 +188,7 @@ class Token : public detail::TokenVariant {
 };
 
 class Keywords {
-   private:
+  private:
     template <typename T, typename = void>
     struct IsIter : std::false_type {};
 
@@ -242,7 +242,7 @@ class Keywords {
         return true;
     }
 
-   public:
+  public:
     static auto lookup(std::string_view identifier) -> std::optional<Token> {
         const uint32_t identifier_hash = hash(identifier);
 

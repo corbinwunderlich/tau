@@ -16,7 +16,7 @@ namespace lexer {
 using TokenStream = std::vector<Token>;
 
 class Lexer {
-   public:
+  public:
     Lexer(src::Sources sources)
         : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
     Lexer(std::string source) : Lexer(src::Sources(std::move(source))) {}
@@ -27,7 +27,7 @@ class Lexer {
         -> std::unique_ptr<src::Sources>;
     [[nodiscard]] auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
 
-   private:
+  private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
     std::unique_ptr<src::Sources> srcs;

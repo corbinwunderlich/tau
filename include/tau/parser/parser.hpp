@@ -12,7 +12,7 @@
 
 namespace parser {
 class Parser {
-   public:
+  public:
     Parser(lexer::TokenStream token_stream,
            std::unique_ptr<src::Sources> sources,
            std::unique_ptr<lexer::Pool> pool)
@@ -36,7 +36,7 @@ class Parser {
     friend struct ast::node::Stmt;
     friend struct ast::node::Decl;
 
-   private:
+  private:
     lexer::TokenStream tokens;
     std::unique_ptr<src::Sources> srcs;
     std::unique_ptr<lexer::Pool> pool;
