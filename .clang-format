@@ -1,12 +1,8 @@
 ---
-BasedOnStyle: LLVM
+BasedOnStyle: Chromium
 
 IndentWidth: 4
 TabWidth: 4
-UseTab: Never
-ColumnLimit: 100
-PenaltyBreakAssignment: 100
-BreakTemplateDeclarations: Yes
 
 IncludeBlocks: Regroup
 IncludeCategories:

@@ -15,25 +15,28 @@ namespace lexer {
 using TokenStream = std::vector<Token>;
 
 class Lexer {
-  public:
-    Lexer(src::Sources sources) : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
+   public:
+    Lexer(src::Sources sources)
+        : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
     Lexer(std::string source) : Lexer(src::Sources(std::move(source))) {}
 
     [[nodiscard]] auto lex() -> TokenStream;
 
-    [[nodiscard]] auto extract_sources() noexcept -> std::unique_ptr<src::Sources>;
+    [[nodiscard]] auto extract_sources() noexcept
+        -> std::unique_ptr<src::Sources>;
     [[nodiscard]] auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
 
-  private:
+   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
     std::unique_ptr<src::Sources> srcs;
-    std::unique_ptr<lexer::Pool> pool = std::make_unique<lexer::Pool>(lexer::Pool{});
+    std::unique_ptr<lexer::Pool> pool =
+        std::make_unique<lexer::Pool>(lexer::Pool{});
 
     size_t pos = 0;
 
     void advance(size_t ahead = 1);
-    void advance(std::optional<char> &current, size_t ahead = 1);
+    void advance(std::optional<char>& current, size_t ahead = 1);
     [[nodiscard]] auto current() const -> std::optional<char>;
     [[nodiscard]] auto peek(size_t ahead = 0) const -> std::optional<char>;
 
@@ -51,4 +54,4 @@ class Lexer {
 
     auto lex_next_token() -> Token;
 };
-} // namespace lexer
+}  // namespace lexer

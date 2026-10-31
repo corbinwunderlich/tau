@@ -133,9 +133,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::Identifier>());
-        CHECK_THAT(
-            std::string(lexer.extract_pool()->resolve(tokens[0].get<token::Identifier>().index)),
-            Equals("testident"));
+        CHECK_THAT(std::string(lexer.extract_pool()->resolve(
+                       tokens[0].get<token::Identifier>().index)),
+                   Equals("testident"));
     }
 
     SECTION("lex keyword") {
@@ -154,7 +154,8 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::Type>());
-        CHECK_THAT(std::string(lexer.extract_pool()->resolve(tokens[0].get<token::Type>().index)),
+        CHECK_THAT(std::string(lexer.extract_pool()->resolve(
+                       tokens[0].get<token::Type>().index)),
                    Equals("Int"));
     }
 
@@ -199,7 +200,8 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::Comment>());
-        CHECK_THAT(std::string(tokens[0].get<token::Comment>().content),
-                   Equals("/* this is the first line\nand this is the second */"));
+        CHECK_THAT(
+            std::string(tokens[0].get<token::Comment>().content),
+            Equals("/* this is the first line\nand this is the second */"));
     }
 }

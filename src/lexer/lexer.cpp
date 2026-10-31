@@ -14,7 +14,12 @@ using std::optional;
 
 using lexer::Lexer;
 
-enum class Base : uint8_t { Binary = 2, Octal = 8, Decimal = 10, Hexadecimal = 16 };
+enum class Base : uint8_t {
+    Binary = 2,
+    Octal = 8,
+    Decimal = 10,
+    Hexadecimal = 16
+};
 
 auto Lexer::lex() -> TokenStream {
     TokenStream token_stream;
@@ -38,14 +43,18 @@ auto Lexer::extract_pool() noexcept -> std::unique_ptr<lexer::Pool> {
     return std::move(this->pool);
 }
 
-inline void Lexer::advance(size_t ahead) { this->pos += ahead; }
+inline void Lexer::advance(size_t ahead) {
+    this->pos += ahead;
+}
 
-inline void Lexer::advance(optional<char> &current, size_t ahead) {
+inline void Lexer::advance(optional<char>& current, size_t ahead) {
     this->pos += ahead;
     current = this->current();
 }
 
-auto Lexer::current() const -> optional<char> { return this->srcs->at(this->pos); }
+auto Lexer::current() const -> optional<char> {
+    return this->srcs->at(this->pos);
+}
 
 auto Lexer::peek(size_t ahead) const -> optional<char> {
     const size_t index = this->pos + ahead;
@@ -56,53 +65,55 @@ auto Lexer::peek(size_t ahead) const -> optional<char> {
 inline void Lexer::skip_whitespace() {
     optional<char> current = this->current();
 
-    while (current.has_value() && std::isspace(static_cast<unsigned char>(*current)) != 0) {
+    while (current.has_value() &&
+           std::isspace(static_cast<unsigned char>(*current)) != 0) {
         this->advance(current);
     }
 }
 
 auto Lexer::escape_character(char character) -> optional<char> {
     switch (character) {
-    case '0':
-        return '\0';
-    case 'a':
-        return '\a';
-    case 'b':
-        return '\b';
-    case 'n':
-        return '\n';
-    case 't':
-        return '\t';
-    case 'r':
-        return '\r';
-    case '\\':
-        return '\\';
-    case '\'':
-        return '\'';
-    case '"':
-        return '"';
-    case 'x': {
-        this->advance();
+        case '0':
+            return '\0';
+        case 'a':
+            return '\a';
+        case 'b':
+            return '\b';
+        case 'n':
+            return '\n';
+        case 't':
+            return '\t';
+        case 'r':
+            return '\r';
+        case '\\':
+            return '\\';
+        case '\'':
+            return '\'';
+        case '"':
+            return '"';
+        case 'x': {
+            this->advance();
 
-        char hex = 0;
+            char hex = 0;
 
-        const auto [_, ec] = std::from_chars(this->srcs->data() + this->pos,
-                                             this->srcs->data() + this->pos + 2, hex, 16);
+            const auto [_, ec] =
+                std::from_chars(this->srcs->data() + this->pos,
+                                this->srcs->data() + this->pos + 2, hex, 16);
 
-        if (ec != std::errc()) {
-            return nullopt;
+            if (ec != std::errc()) {
+                return nullopt;
+            }
+
+            if (hex > std::numeric_limits<char>::max()) {
+                return nullopt;
+            }
+
+            this->advance();
+
+            return hex;
         }
-
-        if (hex > std::numeric_limits<char>::max()) {
+        default:
             return nullopt;
-        }
-
-        this->advance();
-
-        return hex;
-    }
-    default:
-        return nullopt;
     }
 }
 
@@ -111,11 +122,14 @@ inline auto Lexer::read_type() -> Token {
 
     optional<char> current = this->current();
 
-    while (current.has_value() && std::isalnum(static_cast<unsigned char>(*current)) != 0) {
+    while (current.has_value() &&
+           std::isalnum(static_cast<unsigned char>(*current)) != 0) {
         this->advance(current);
     }
 
-    const std::string_view identifier = this->srcs->range(start, this->pos - start);
+    const std::string_view identifier =
+        this->srcs->range(start, this->pos - start);
+
     const size_t index = this->pool->insert(identifier);
 
     return token::Type{{}, index};
@@ -126,13 +140,16 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
 
     optional<char> current = this->current();
 
-    while (current.has_value() && std::isalnum(static_cast<unsigned char>(*current)) != 0) {
+    while (current.has_value() &&
+           std::isalnum(static_cast<unsigned char>(*current)) != 0) {
         this->advance(current);
     }
 
-    const std::string_view identifier = this->srcs->range(start, this->pos - start);
+    const std::string_view identifier =
+        this->srcs->range(start, this->pos - start);
 
-    if (const auto keyword = Keywords::lookup(identifier); keyword.has_value()) {
+    if (const auto keyword = Keywords::lookup(identifier);
+        keyword.has_value()) {
         return *keyword;
     }
 
@@ -147,20 +164,21 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
     optional<char> current = this->current();
 
     switch (type) {
-    case Lexer::CommentType::SingleLine:
-        while (current.has_value() && *current != '\n') {
-            this->advance(current);
-        }
+        case Lexer::CommentType::SingleLine:
+            while (current.has_value() && *current != '\n') {
+                this->advance(current);
+            }
 
-        break;
-    case Lexer::CommentType::MultiLine:
-        while (current.has_value() && !(current == '*' && this->peek(1) == '/')) {
-            this->advance(current);
-        }
+            break;
+        case Lexer::CommentType::MultiLine:
+            while (current.has_value() &&
+                   !(current == '*' && this->peek(1) == '/')) {
+                this->advance(current);
+            }
 
-        this->advance(2);
+            this->advance(2);
 
-        break;
+            break;
     }
 
     const auto comment = this->srcs->range(start, this->pos - start);
@@ -239,17 +257,17 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
         }
 
         switch (*current) {
-        case 'x':
-            base = Base::Hexadecimal;
-            break;
-        case 'o':
-            base = Base::Octal;
-            break;
-        case 'b':
-            base = Base::Binary;
-            break;
-        default:
-            return nullopt;
+            case 'x':
+                base = Base::Hexadecimal;
+                break;
+            case 'o':
+                base = Base::Octal;
+                break;
+            case 'b':
+                base = Base::Binary;
+                break;
+            default:
+                return nullopt;
         }
 
         this->advance(current);
@@ -261,30 +279,30 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
         this->advance(current);
 
         switch (base) {
-        case Base::Binary:
-            if (*current == '0' || *current == '1') {
-                continue;
-            }
+            case Base::Binary:
+                if (*current == '0' || *current == '1') {
+                    continue;
+                }
 
-            break;
-        case Base::Octal:
-            if (*current >= '0' && *current <= '7') {
-                continue;
-            }
+                break;
+            case Base::Octal:
+                if (*current >= '0' && *current <= '7') {
+                    continue;
+                }
 
-            break;
-        case Base::Decimal:
-            if (std::isdigit(static_cast<unsigned char>(*current)) != 0) {
-                continue;
-            }
+                break;
+            case Base::Decimal:
+                if (std::isdigit(static_cast<unsigned char>(*current)) != 0) {
+                    continue;
+                }
 
-            break;
-        case Base::Hexadecimal:
-            if (std::isxdigit(static_cast<unsigned char>(*current)) != 0) {
-                continue;
-            }
+                break;
+            case Base::Hexadecimal:
+                if (std::isxdigit(static_cast<unsigned char>(*current)) != 0) {
+                    continue;
+                }
 
-            break;
+                break;
         }
 
         break;
@@ -292,8 +310,9 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
 
     uint64_t number;
 
-    const auto [_, ec] = std::from_chars(this->srcs->data() + start, this->srcs->data() + this->pos,
-                                         number, static_cast<uint8_t>(base));
+    const auto [_, ec] = std::from_chars(this->srcs->data() + start,
+                                         this->srcs->data() + this->pos, number,
+                                         static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
         return nullopt;
@@ -312,105 +331,105 @@ inline auto Lexer::read_literal_token() -> Token {
     const optional<char> peek = this->peek(1);
 
     switch (*current) {
-    case token::Semicolon::text():
-        this->advance();
-        return token::Semicolon{};
-    case token::Comma::text():
-        this->advance();
-        return token::Comma{};
-    case token::LeftParen::text():
-        this->advance();
-        return token::LeftParen{};
-    case token::RightParen::text():
-        this->advance();
-        return token::RightParen{};
-    case token::LeftBrace::text():
-        this->advance();
-        return token::LeftBrace{};
-    case token::RightBrace::text():
-        this->advance();
-        return token::RightBrace{};
-    case token::LeftBracket::text():
-        this->advance();
-        return token::LeftBracket{};
-    case token::RightBracket::text():
-        this->advance();
-        return token::RightBracket{};
-    case token::Equals::text():
-        this->advance();
-        return token::Equals{};
-        // if (peek != '=') {
-        //     this->advance();
-        //     return token::Equals{};
-        // }
+        case token::Semicolon::text():
+            this->advance();
+            return token::Semicolon{};
+        case token::Comma::text():
+            this->advance();
+            return token::Comma{};
+        case token::LeftParen::text():
+            this->advance();
+            return token::LeftParen{};
+        case token::RightParen::text():
+            this->advance();
+            return token::RightParen{};
+        case token::LeftBrace::text():
+            this->advance();
+            return token::LeftBrace{};
+        case token::RightBrace::text():
+            this->advance();
+            return token::RightBrace{};
+        case token::LeftBracket::text():
+            this->advance();
+            return token::LeftBracket{};
+        case token::RightBracket::text():
+            this->advance();
+            return token::RightBracket{};
+        case token::Equals::text():
+            this->advance();
+            return token::Equals{};
+            // if (peek != '=') {
+            //     this->advance();
+            //     return token::Equals{};
+            // }
+            //
+            // this->advance(2);
+            // return token::DoubleEquals{};
+        // case '!':
+        //     if (peek == '=') {
+        //         this->advance();
+        //         return token::NotEquals{};
+        //     }
         //
-        // this->advance(2);
-        // return token::DoubleEquals{};
-    // case '!':
-    //     if (peek == '=') {
-    //         this->advance();
-    //         return token::NotEquals{};
-    //     }
-    //
-    //     this->advance(2);
-    //     return token::Invalid{};
-    // case '<':
-    //     if (peek != '=') {
-    //         this->advance();
-    //         return token::LessThan{};
-    //     }
-    //
-    //     this->advance(2);
-    //     return token::LessThanEquals{};
-    // case '>':
-    //     if (peek != '=') {
-    //         this->advance();
-    //         return token::GreaterThan{};
-    //     }
-    //
-    //     this->advance(2);
-    //     return token::GreaterThanEquals{};
-    // case '|':
-    //     if (peek != '|') {
-    //         this->advance();
-    //         return token::Or{};
-    //     }
-    //
-    //     this->advance(2);
-    //     return token::LogicalOr{};
-    // case '&':
-    //     if (peek != '&') {
-    //         this->advance();
-    //         return token::And{};
-    //     }
-    //
-    //     this->advance(2);
-    //     return token::LogicalAnd{};
-    // case '^':
-    //     this->advance();
-    //     return token::Xor{};
-    case token::Plus::text():
-        this->advance();
-        return token::Plus{};
-    case token::Minus::text():
-        this->advance();
-        return token::Minus{};
-    case token::Asterisk::text():
-        this->advance();
-        return token::Asterisk{};
-    case token::ForwardSlash::text():
-        if (peek == '/') {
-            return this->read_comment(CommentType::SingleLine);
-        }
+        //     this->advance(2);
+        //     return token::Invalid{};
+        // case '<':
+        //     if (peek != '=') {
+        //         this->advance();
+        //         return token::LessThan{};
+        //     }
+        //
+        //     this->advance(2);
+        //     return token::LessThanEquals{};
+        // case '>':
+        //     if (peek != '=') {
+        //         this->advance();
+        //         return token::GreaterThan{};
+        //     }
+        //
+        //     this->advance(2);
+        //     return token::GreaterThanEquals{};
+        // case '|':
+        //     if (peek != '|') {
+        //         this->advance();
+        //         return token::Or{};
+        //     }
+        //
+        //     this->advance(2);
+        //     return token::LogicalOr{};
+        // case '&':
+        //     if (peek != '&') {
+        //         this->advance();
+        //         return token::And{};
+        //     }
+        //
+        //     this->advance(2);
+        //     return token::LogicalAnd{};
+        // case '^':
+        //     this->advance();
+        //     return token::Xor{};
+        case token::Plus::text():
+            this->advance();
+            return token::Plus{};
+        case token::Minus::text():
+            this->advance();
+            return token::Minus{};
+        case token::Asterisk::text():
+            this->advance();
+            return token::Asterisk{};
+        case token::ForwardSlash::text():
+            if (peek == '/') {
+                return this->read_comment(CommentType::SingleLine);
+            }
 
-        if (peek == '*') {
-            return this->read_comment(CommentType::MultiLine);
-        }
+            if (peek == '*') {
+                return this->read_comment(CommentType::MultiLine);
+            }
 
-        this->advance();
-        return token::ForwardSlash{};
-    default:
-        return token::Invalid{};
+            this->advance();
+            return token::ForwardSlash{};
+        default:
+            return token::Invalid{};
     }
 }
 
@@ -426,7 +445,8 @@ auto Lexer::lex_next_token() -> Token {
     char current = *peek;
 
     if (std::isalpha(static_cast<unsigned char>(current)) != 0) {
-        if (static_cast<bool>(std::isupper(static_cast<unsigned char>(current)))) {
+        if (static_cast<bool>(
+                std::isupper(static_cast<unsigned char>(current)))) {
             return this->read_type();
         }
 

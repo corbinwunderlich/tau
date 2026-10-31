@@ -61,45 +61,45 @@
     X(Asterisk, '*', BLANK_TOKEN)                                                                    \
     X(ForwardSlash, '/', BLANK_TOKEN)
 
-#define TOKENS(X)                                                                                  \
-    KEYWORDS(X)                                                                                    \
-    SYMBOLS(X)                                                                                     \
-                                                                                                   \
-    X(Type, "type", size_t index;)                                                                 \
-    X(Identifier, "identifier", size_t index;)                                                     \
-                                                                                                   \
-    X(Comment, "comment", std::string_view content;)                                               \
-                                                                                                   \
-    X(StringLiteral, "string literal", std::string value;)                                         \
-    X(CharacterLiteral, "character literal", char value;)                                          \
-    X(IntegerLiteral, "integer literal", uint64_t value;)                                          \
-                                                                                                   \
-    X(Eof, "end of file", BLANK_TOKEN)                                                             \
+#define TOKENS(X)                                          \
+    KEYWORDS(X)                                            \
+    SYMBOLS(X)                                             \
+                                                           \
+    X(Type, "type", size_t index;)                         \
+    X(Identifier, "identifier", size_t index;)             \
+                                                           \
+    X(Comment, "comment", std::string_view content;)       \
+                                                           \
+    X(StringLiteral, "string literal", std::string value;) \
+    X(CharacterLiteral, "character literal", char value;)  \
+    X(IntegerLiteral, "integer literal", uint64_t value;)  \
+                                                           \
+    X(Eof, "end of file", BLANK_TOKEN)                     \
     X(Invalid, "invalid", BLANK_TOKEN)
 
 namespace lexer::token {
 template <typename Derived>
 struct Token {
-  private:
+   private:
     Token() = default;
 
-  public:
+   public:
     friend Derived;
 
     static constexpr auto text() noexcept { return Derived::text(); }
 };
 
-#define AS_STRUCT(Type, Text, ...)                                                                 \
-    struct Type : public Token<Type> {                                                             \
-        friend struct Token<Type>;                                                                 \
-                                                                                                   \
-        __VA_ARGS__                                                                                \
-                                                                                                   \
-        static constexpr auto text() noexcept { return Text; };                                    \
+#define AS_STRUCT(Type, Text, ...)                              \
+    struct Type : public Token<Type> {                          \
+        friend struct Token<Type>;                              \
+                                                                \
+        __VA_ARGS__                                             \
+                                                                \
+        static constexpr auto text() noexcept { return Text; }; \
     };
 TOKENS(AS_STRUCT)
 #undef AS_STRUCT
-} // namespace lexer::token
+}  // namespace lexer::token
 
 namespace lexer::detail {
 #define AS_TUPLE(Token, ...) lexer::token::Token,
@@ -111,16 +111,18 @@ struct TokenBuilder;
 
 template <typename... Tokens, std::size_t... Is>
 struct TokenBuilder<std::tuple<Tokens...>, std::index_sequence<Is...>> {
-    using type = std::variant<std::tuple_element_t<Is, std::tuple<Tokens...>>...>;
+    using type =
+        std::variant<std::tuple_element_t<Is, std::tuple<Tokens...>>...>;
 };
 
 using TokenVariant = typename TokenBuilder<
-    TokenTuple, std::make_index_sequence<std::tuple_size_v<TokenTuple> - 1>>::type;
-} // namespace lexer::detail
+    TokenTuple,
+    std::make_index_sequence<std::tuple_size_v<TokenTuple> - 1>>::type;
+}  // namespace lexer::detail
 
 namespace lexer {
 class Token : public detail::TokenVariant {
-  private:
+   private:
     template <class... Ts>
     struct Overload : Ts... {
         using Ts::operator()...;
@@ -129,34 +131,36 @@ class Token : public detail::TokenVariant {
     template <class... Ts>
     Overload(Ts...) -> Overload<Ts...>;
 
-  public:
+   public:
     using variant::variant;
 
     template <typename... Visitors>
-    constexpr auto visit(Visitors &&...visitors) & -> decltype(auto) {
+    constexpr auto visit(Visitors&&... visitors) & -> decltype(auto) {
         return std::visit(Overload{std::forward<Visitors>(visitors)...}, *this);
     }
 
     template <typename... Visitors>
-    constexpr auto visit(Visitors &&...visitors) const & -> decltype(auto) {
+    constexpr auto visit(Visitors&&... visitors) const& -> decltype(auto) {
         return std::visit(Overload{std::forward<Visitors>(visitors)...}, *this);
     }
 
     template <typename... Visitors>
-    constexpr auto visit(Visitors &&...visitors) && -> decltype(auto) {
-        return std::visit(Overload{std::forward<Visitors>(visitors)...}, std::move(*this));
+    constexpr auto visit(Visitors&&... visitors) && -> decltype(auto) {
+        return std::visit(Overload{std::forward<Visitors>(visitors)...},
+                          std::move(*this));
     }
 
     template <typename T>
-    auto get() const & noexcept(false) -> T {
+    auto get() const& noexcept(false) -> T {
         try {
             return std::get<T>(*this);
-        } catch (std::bad_variant_access const &e) {
-            return this->visit([](auto &&arg) -> T {
+        } catch (std::bad_variant_access const& e) {
+            return this->visit([](auto&& arg) -> T {
                 using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+                static_assert(
+                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-                const token::Token<TokenType> &token = arg;
+                const token::Token<TokenType>& token = arg;
 
                 throw parser::error::UnexpectedToken(token.text(), T::text());
             });
@@ -164,26 +168,27 @@ class Token : public detail::TokenVariant {
     }
 
     template <typename... T>
-    [[nodiscard]] constexpr auto is() const & noexcept -> bool {
+    [[nodiscard]] constexpr auto is() const& noexcept -> bool {
         return (std::holds_alternative<T>(*this) || ...);
     }
 
     template <typename... T>
-    [[nodiscard]] constexpr auto is_not() const & noexcept -> bool {
+    [[nodiscard]] constexpr auto is_not() const& noexcept -> bool {
         return (!std::holds_alternative<T>(*this) && ...);
     }
 
     template <typename T>
-    constexpr auto expect() const & noexcept(false) -> void {
+    constexpr auto expect() const& noexcept(false) -> void {
         if (this->is<T>()) {
             return;
         }
 
-        this->visit([](auto &&arg) -> void {
+        this->visit([](auto&& arg) -> void {
             using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+            static_assert(
+                std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-            const token::Token<TokenType> &token = arg;
+            const token::Token<TokenType>& token = arg;
 
             throw parser::error::UnexpectedToken(token.text(), T::text());
         });
@@ -191,13 +196,14 @@ class Token : public detail::TokenVariant {
 };
 
 class Keywords {
-  private:
+   private:
     template <typename T, typename = void>
     struct IsIter : std::false_type {};
 
     template <typename T>
-    struct IsIter<
-        T, std::void_t<decltype(std::declval<T>().begin()), decltype(std::declval<T>().end())>>
+    struct IsIter<T,
+                  std::void_t<decltype(std::declval<T>().begin()),
+                              decltype(std::declval<T>().end())>>
         : std::true_type {};
 
     static constexpr uint32_t fnv_a1_base = 0x811c9dc5;
@@ -227,7 +233,8 @@ class Keywords {
     }
 
     template <size_t N>
-    static constexpr auto matches(std::string_view identifier, const char (&keyword)[N]) -> bool {
+    static constexpr auto matches(std::string_view identifier,
+                                  const char (&keyword)[N]) -> bool {
         if (identifier.size() != N - 1) {
             return false;
         }
@@ -243,29 +250,29 @@ class Keywords {
         return true;
     }
 
-  public:
+   public:
     static auto lookup(std::string_view identifier) -> std::optional<Token> {
         const uint32_t identifier_hash = hash(identifier);
 
         switch (identifier_hash) {
-#define AS_SWITCH_CASE(Token, keyword, ...)                                                        \
-    case hash(keyword): {                                                                          \
-        if (matches(identifier, keyword)) {                                                        \
-            return lexer::token::Token{};                                                          \
-        }                                                                                          \
-        break;                                                                                     \
+#define AS_SWITCH_CASE(Token, keyword, ...) \
+    case hash(keyword): {                   \
+        if (matches(identifier, keyword)) { \
+            return lexer::token::Token{};   \
+        }                                   \
+        break;                              \
     }
 
             KEYWORDS(AS_SWITCH_CASE)
 #undef AS_SWITCH_CASE
-        default:
-            break;
+            default:
+                break;
         }
 
         return std::nullopt;
     }
 };
-} // namespace lexer
+}  // namespace lexer
 
 #undef BLANK_TOKEN
 

@@ -34,7 +34,8 @@ auto Parser::peek_token() -> lexer::Token {
     return this->tokens[index];
 }
 
-auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> FunctionCall {
+auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
+    -> FunctionCall {
     parser.next_token().expect<token::LeftParen>();
 
     auto params = std::vector<Expr>();
@@ -51,13 +52,15 @@ auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> 
         bool is_last_param = parser.next_token().visit(
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
-            [](auto &&arg) -> bool {
+            [](auto&& arg) -> bool {
                 using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+                static_assert(
+                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-                const token::Token<TokenType> &token = arg;
+                const token::Token<TokenType>& token = arg;
 
-                throw error::UnexpectedToken(token.text(), token::RightParen::text(),
+                throw error::UnexpectedToken(token.text(),
+                                             token::RightParen::text(),
                                              token::Comma::text());
             });
 
@@ -75,16 +78,19 @@ auto node::FunctionCall::parse(Parser &parser, token::Identifier identifier) -> 
     auto allocated_params = std::make_unique<Expr[]>(param_count);
     std::move(params.begin(), params.end(), allocated_params.get());
 
-    return FunctionCall{Ident(identifier), std::move(allocated_params), param_count};
+    return FunctionCall{Ident(identifier), std::move(allocated_params),
+                        param_count};
 }
 
-auto node::Assignment::parse(Parser &parser, token::Identifier identifier) -> Assignment {
+auto node::Assignment::parse(Parser& parser, token::Identifier identifier)
+    -> Assignment {
     parser.next_token().expect<token::Equals>();
 
-    return Assignment{Ident(identifier), std::make_unique<Expr>(Expr::parse(parser))};
+    return Assignment{Ident(identifier),
+                      std::make_unique<Expr>(Expr::parse(parser))};
 }
 
-auto node::Factor::parse(Parser &parser) -> Factor {
+auto node::Factor::parse(Parser& parser) -> Factor {
     const Token token = parser.peek_token();
 
     Factor factor = token.visit(
@@ -93,12 +99,13 @@ auto node::Factor::parse(Parser &parser) -> Factor {
 
             return parser.peek_token().visit(
                 [&parser, &identifier](token::LeftParen) -> Factor {
-                    return std::make_unique<FunctionCall>(FunctionCall::parse(parser, identifier));
+                    return std::make_unique<FunctionCall>(
+                        FunctionCall::parse(parser, identifier));
                 },
                 [&parser, &identifier](token::Equals) -> Factor {
                     return Assignment::parse(parser, identifier);
                 },
-                [&identifier](auto &&) -> Factor { return Ident(identifier); });
+                [&identifier](auto&&) -> Factor { return Ident(identifier); });
         },
         [&parser](token::StringLiteral str) -> Factor {
             parser.next_token();
@@ -124,19 +131,21 @@ auto node::Factor::parse(Parser &parser) -> Factor {
 
             return Group{std::move(expression)};
         },
-        [](auto &&arg) -> Factor {
+        [](auto&& arg) -> Factor {
             using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+            static_assert(
+                std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-            const token::Token<TokenType> &token = arg;
+            const token::Token<TokenType>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Fn::text(), token::Var::text());
+            throw error::UnexpectedToken(token.text(), token::Fn::text(),
+                                         token::Var::text());
         });
 
     return factor;
 }
 
-auto node::Term::parse(Parser &parser) -> Term {
+auto node::Term::parse(Parser& parser) -> Term {
     auto factor = Factor::parse(parser);
 
     const Token token = parser.peek_token();
@@ -151,13 +160,18 @@ auto node::Term::parse(Parser &parser) -> Term {
     auto rhs = std::make_unique<Term>(Term::parse(parser));
 
     Term term = operation.visit(
-        [&lhs, &rhs](token::Asterisk) -> Term { return Mult{std::move(lhs), std::move(rhs)}; },
-        [&lhs, &rhs](token::ForwardSlash) -> Term { return Div{std::move(lhs), std::move(rhs)}; },
-        [](auto &&arg) -> Term {
+        [&lhs, &rhs](token::Asterisk) -> Term {
+            return Mult{std::move(lhs), std::move(rhs)};
+        },
+        [&lhs, &rhs](token::ForwardSlash) -> Term {
+            return Div{std::move(lhs), std::move(rhs)};
+        },
+        [](auto&& arg) -> Term {
             using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+            static_assert(
+                std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-            const token::Token<TokenType> &token = arg;
+            const token::Token<TokenType>& token = arg;
 
             throw error::UnexpectedToken(token.text(), token::Asterisk::text(),
                                          token::ForwardSlash::text());
@@ -166,7 +180,7 @@ auto node::Term::parse(Parser &parser) -> Term {
     return term;
 }
 
-auto node::Expr::parse(Parser &parser) -> Expr {
+auto node::Expr::parse(Parser& parser) -> Expr {
     auto term = Term::parse(parser);
 
     const Token token = parser.peek_token();
@@ -181,21 +195,27 @@ auto node::Expr::parse(Parser &parser) -> Expr {
     auto rhs = std::make_unique<Expr>(Expr::parse(parser));
 
     Expr expression = operation.visit(
-        [&lhs, &rhs](token::Plus) -> Expr { return Add{std::move(lhs), std::move(rhs)}; },
-        [&lhs, &rhs](token::Minus) -> Expr { return Sub{std::move(lhs), std::move(rhs)}; },
-        [](auto &&arg) -> Expr {
+        [&lhs, &rhs](token::Plus) -> Expr {
+            return Add{std::move(lhs), std::move(rhs)};
+        },
+        [&lhs, &rhs](token::Minus) -> Expr {
+            return Sub{std::move(lhs), std::move(rhs)};
+        },
+        [](auto&& arg) -> Expr {
             using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+            static_assert(
+                std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-            const token::Token<TokenType> &token = arg;
+            const token::Token<TokenType>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Plus::text(), token::Minus::text());
+            throw error::UnexpectedToken(token.text(), token::Plus::text(),
+                                         token::Minus::text());
         });
 
     return expression;
 }
 
-auto node::Block::parse(Parser &parser) -> Block {
+auto node::Block::parse(Parser& parser) -> Block {
     parser.next_token().expect<token::LeftBrace>();
 
     auto statements = std::vector<Stmt>();
@@ -214,7 +234,7 @@ auto node::Block::parse(Parser &parser) -> Block {
     return Block{std::move(allocated_statements), statement_count};
 }
 
-auto node::VarDecl::parse(Parser &parser) -> VarDecl {
+auto node::VarDecl::parse(Parser& parser) -> VarDecl {
     parser.next_token().expect<token::Var>();
 
     const auto ident = parser.next_token().get<token::Identifier>();
@@ -225,7 +245,7 @@ auto node::VarDecl::parse(Parser &parser) -> VarDecl {
     return VarDecl{Ident(ident), Type(type)};
 }
 
-auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
+auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
     parser.next_token().expect<token::Fn>();
 
     const auto ident = parser.next_token().get<token::Identifier>();
@@ -247,13 +267,15 @@ auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
         bool is_last_param = parser.next_token().visit(
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
-            [](auto &&arg) -> bool {
+            [](auto&& arg) -> bool {
                 using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+                static_assert(
+                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-                const token::Token<TokenType> &token = arg;
+                const token::Token<TokenType>& token = arg;
 
-                throw error::UnexpectedToken(token.text(), token::RightParen::text(),
+                throw error::UnexpectedToken(token.text(),
+                                             token::RightParen::text(),
                                              token::Comma::text());
             });
 
@@ -277,11 +299,11 @@ auto node::FunctionDecl::parse(Parser &parser) -> FunctionDecl {
     auto allocated_params = std::make_unique<Param[]>(param_count);
     std::move(params.begin(), params.end(), allocated_params.get());
 
-    return FunctionDecl{Ident(ident), std::move(allocated_params), param_count, Type(return_type),
-                        Block::parse(parser)};
+    return FunctionDecl{Ident(ident), std::move(allocated_params), param_count,
+                        Type(return_type), Block::parse(parser)};
 }
 
-auto node::Return::parse(parser::Parser &parser) -> Return {
+auto node::Return::parse(parser::Parser& parser) -> Return {
     parser.next_token().expect<token::Return>();
 
     auto expression = std::make_unique<Expr>(Expr::parse(parser));
@@ -291,14 +313,14 @@ auto node::Return::parse(parser::Parser &parser) -> Return {
     return Return{std::move(expression)};
 }
 
-auto node::Stmt::parse(Parser &parser) -> Stmt {
+auto node::Stmt::parse(Parser& parser) -> Stmt {
     const Token token = parser.peek_token();
 
     Stmt statement = token.visit(
         [&parser](token::LeftBrace) -> Stmt { return Block::parse(parser); },
         [&parser](token::Var) -> Stmt { return VarDecl::parse(parser); },
         [&parser](token::Return) -> Stmt { return Return::parse(parser); },
-        [&parser](auto &&arg) -> Stmt {
+        [&parser](auto&& arg) -> Stmt {
             try {
                 auto expr = std::make_unique<Expr>(Expr::parse(parser));
 
@@ -307,9 +329,10 @@ auto node::Stmt::parse(Parser &parser) -> Stmt {
                 return expr;
             } catch (...) {
                 using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+                static_assert(
+                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-                const token::Token<TokenType> &token = arg;
+                const token::Token<TokenType>& token = arg;
 
                 throw error::UnexpectedToken(token.text(), "statement");
             }
@@ -318,21 +341,24 @@ auto node::Stmt::parse(Parser &parser) -> Stmt {
     return statement;
 }
 
-auto node::Decl::parse(Parser &parser) -> Decl {
+auto node::Decl::parse(Parser& parser) -> Decl {
     const Token token = parser.peek_token();
 
     Decl decl = token.visit(
         [&parser](token::Var) -> Decl { return node::VarDecl::parse(parser); },
         [&parser](token::Fn) -> Decl {
-            return std::make_unique<node::FunctionDecl>(node::FunctionDecl::parse(parser));
+            return std::make_unique<node::FunctionDecl>(
+                node::FunctionDecl::parse(parser));
         },
-        [](auto &&arg) -> Decl {
+        [](auto&& arg) -> Decl {
             using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(std::is_base_of_v<token::Token<TokenType>, TokenType>);
+            static_assert(
+                std::is_base_of_v<token::Token<TokenType>, TokenType>);
 
-            const token::Token<TokenType> &token = arg;
+            const token::Token<TokenType>& token = arg;
 
-            throw error::UnexpectedToken(token.text(), token::Fn::text(), token::Var::text());
+            throw error::UnexpectedToken(token.text(), token::Fn::text(),
+                                         token::Var::text());
         });
 
     return decl;

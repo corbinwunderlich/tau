@@ -21,14 +21,14 @@ struct Expr;
 struct Stmt;
 
 class Ident {
-  private:
+   private:
     size_t index;
 
-  public:
+   public:
     Ident() = default;
     Ident(lexer::token::Identifier identifier) : index(identifier.index) {};
 
-    [[nodiscard]] auto name(const lexer::Pool &pool) const -> std::string_view {
+    [[nodiscard]] auto name(const lexer::Pool& pool) const -> std::string_view {
         const std::string_view name = pool.resolve(this->index);
 
         return name;
@@ -36,14 +36,14 @@ class Ident {
 };
 
 class Type {
-  private:
+   private:
     size_t index;
 
-  public:
+   public:
     Type() = default;
     Type(lexer::token::Type type) : index(type.index) {};
 
-    [[nodiscard]] auto name(const lexer::Pool &pool) const -> std::string_view {
+    [[nodiscard]] auto name(const lexer::Pool& pool) const -> std::string_view {
         const std::string_view name = pool.resolve(this->index);
 
         return name;
@@ -68,7 +68,8 @@ struct FunctionCall {
     std::unique_ptr<Expr[]> params;
     uint8_t param_count;
 
-    static auto parse(parser::Parser &parser, lexer::token::Identifier identifier) noexcept(false)
+    static auto parse(parser::Parser& parser,
+                      lexer::token::Identifier identifier) noexcept(false)
         -> FunctionCall;
 };
 
@@ -76,7 +77,8 @@ struct Assignment {
     Ident ident;
     std::unique_ptr<Expr> expr;
 
-    static auto parse(parser::Parser &parser, lexer::token::Identifier identifier) noexcept(false)
+    static auto parse(parser::Parser& parser,
+                      lexer::token::Identifier identifier) noexcept(false)
         -> Assignment;
 };
 
@@ -84,11 +86,16 @@ struct Group {
     std::unique_ptr<Expr> expr;
 };
 
-struct Factor : std::variant<Ident, String, Character, Integer, std::unique_ptr<FunctionCall>,
-                             Assignment, Group> {
+struct Factor : std::variant<Ident,
+                             String,
+                             Character,
+                             Integer,
+                             std::unique_ptr<FunctionCall>,
+                             Assignment,
+                             Group> {
     using variant::variant;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Factor;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Factor;
 };
 
 struct Mult {
@@ -104,7 +111,7 @@ struct Div {
 struct Term : std::variant<Factor, Mult, Div> {
     using variant::variant;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Term;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Term;
 };
 
 struct Add {
@@ -120,21 +127,21 @@ struct Sub {
 struct Expr : std::variant<Term, Add, Sub> {
     using variant::variant;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Expr;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Expr;
 };
 
 struct Block {
     std::unique_ptr<Stmt[]> stmts;
     size_t stmt_count;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Block;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Block;
 };
 
 struct VarDecl {
     Ident ident;
     Type type;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> VarDecl;
+    static auto parse(parser::Parser& parser) noexcept(false) -> VarDecl;
 };
 
 struct FunctionDecl {
@@ -155,24 +162,24 @@ struct FunctionDecl {
 
     Block body;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> FunctionDecl;
+    static auto parse(parser::Parser& parser) noexcept(false) -> FunctionDecl;
 };
 
 struct Return {
     std::unique_ptr<Expr> expr;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Return;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Return;
 };
 
 struct Stmt : std::variant<std::unique_ptr<Expr>, Block, VarDecl, Return> {
     using variant::variant;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Stmt;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Stmt;
 };
 
 struct Decl : std::variant<VarDecl, std::unique_ptr<FunctionDecl>> {
     using variant::variant;
 
-    static auto parse(parser::Parser &parser) noexcept(false) -> Decl;
+    static auto parse(parser::Parser& parser) noexcept(false) -> Decl;
 };
-} // namespace ast::node
+}  // namespace ast::node

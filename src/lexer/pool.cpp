@@ -19,4 +19,6 @@ auto Pool::insert(std::string_view identifier) noexcept -> size_t {
     return index;
 }
 
-auto Pool::resolve(size_t index) const noexcept -> std::string_view { return this->table[index]; }
+auto Pool::resolve(size_t index) const noexcept -> std::string_view {
+    return this->table[index];
+}
