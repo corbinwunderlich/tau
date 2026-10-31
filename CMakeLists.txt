@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 file(READ "${CMAKE_CURRENT_LIST_DIR}/.version" VERSION_FILE)
 string(STRIP "${VERSION_FILE}" VERSION_FILE)
@@ -16,6 +16,8 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_UNITY_BUILD ON)
 
 add_compile_options(
     -Wall

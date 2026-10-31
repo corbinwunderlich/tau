@@ -1,6 +1,7 @@
 #include <cctype>
 #include <charconv>
 #include <limits>
+#include <memory>
 #include <optional>
 #include <string_view>
 #include <system_error>
