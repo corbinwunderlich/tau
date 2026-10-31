@@ -13,4 +13,4 @@ target_precompile_headers(tests REUSE_FROM libtau)
 
 include(Catch)
 
-catch_discover_tests(tests)
+catch_discover_tests(tests EXTRA_ARGS --colour-mode ANSI)

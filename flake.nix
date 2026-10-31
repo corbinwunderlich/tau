@@ -89,6 +89,7 @@
           packages = with pkgs; [clang cmake ninja pkg-config catch2_3] ++ config.pre-commit.settings.enabledPackages;
 
           CMAKE_GENERATOR = "Ninja";
+          CTEST_OUTPUT_ON_FAILURE = 1;
 
           ASAN_OPTIONS = "detect_leaks=1:exitcode=1";
 
