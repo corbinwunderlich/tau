@@ -53,11 +53,7 @@ auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
             [](auto&& arg) -> bool {
-                using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(
-                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-                const token::Token<TokenType>& token = arg;
+                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
                 throw error::UnexpectedToken(token.text(),
                                              token::RightParen::text(),
@@ -132,11 +128,7 @@ auto node::Factor::parse(Parser& parser) -> Factor {
             return Group{std::move(expression)};
         },
         [](auto&& arg) -> Factor {
-            using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(
-                std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-            const token::Token<TokenType>& token = arg;
+            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.text(), token::Fn::text(),
                                          token::Var::text());
@@ -167,11 +159,7 @@ auto node::Term::parse(Parser& parser) -> Term {
             return Div{std::move(lhs), std::move(rhs)};
         },
         [](auto&& arg) -> Term {
-            using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(
-                std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-            const token::Token<TokenType>& token = arg;
+            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.text(), token::Asterisk::text(),
                                          token::ForwardSlash::text());
@@ -202,11 +190,7 @@ auto node::Expr::parse(Parser& parser) -> Expr {
             return Sub{std::move(lhs), std::move(rhs)};
         },
         [](auto&& arg) -> Expr {
-            using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(
-                std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-            const token::Token<TokenType>& token = arg;
+            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.text(), token::Plus::text(),
                                          token::Minus::text());
@@ -268,11 +252,7 @@ auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
             [](auto&& arg) -> bool {
-                using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(
-                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-                const token::Token<TokenType>& token = arg;
+                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
                 throw error::UnexpectedToken(token.text(),
                                              token::RightParen::text(),
@@ -328,11 +308,7 @@ auto node::Stmt::parse(Parser& parser) -> Stmt {
 
                 return expr;
             } catch (...) {
-                using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(
-                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-                const token::Token<TokenType>& token = arg;
+                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
                 throw error::UnexpectedToken(token.text(), "statement");
             }
@@ -351,11 +327,7 @@ auto node::Decl::parse(Parser& parser) -> Decl {
                 node::FunctionDecl::parse(parser));
         },
         [](auto&& arg) -> Decl {
-            using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(
-                std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-            const token::Token<TokenType>& token = arg;
+            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.text(), token::Fn::text(),
                                          token::Var::text());

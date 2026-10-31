@@ -156,11 +156,7 @@ class Token : public detail::TokenVariant {
             return std::get<T>(*this);
         } catch (std::bad_variant_access const& e) {
             return this->visit([](auto&& arg) -> T {
-                using TokenType = std::decay_t<decltype(arg)>;
-                static_assert(
-                    std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-                const token::Token<TokenType>& token = arg;
+                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
                 throw parser::error::UnexpectedToken(token.text(), T::text());
             });
@@ -184,11 +180,7 @@ class Token : public detail::TokenVariant {
         }
 
         this->visit([](auto&& arg) -> void {
-            using TokenType = std::decay_t<decltype(arg)>;
-            static_assert(
-                std::is_base_of_v<token::Token<TokenType>, TokenType>);
-
-            const token::Token<TokenType>& token = arg;
+            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw parser::error::UnexpectedToken(token.text(), T::text());
         });
