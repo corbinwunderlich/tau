@@ -10,7 +10,7 @@
 #include <utility>
 #include <variant>
 
-#include <tau/parser/error.hpp>
+#include <tau/error/unexpected_token.hpp>
 
 #define BLANK_TOKEN static_assert(true);
 
@@ -74,8 +74,7 @@
     X(CharacterLiteral, "character literal", char value;)  \
     X(IntegerLiteral, "integer literal", uint64_t value;)  \
                                                            \
-    X(Eof, "end of file", BLANK_TOKEN)                     \
-    X(Invalid, "invalid", BLANK_TOKEN)
+    X(Eof, "end of file", BLANK_TOKEN)
 
 namespace lexer::token {
 template <typename Derived>
@@ -158,8 +157,8 @@ class Token : public detail::TokenVariant {
             return this->visit([](auto&& arg) -> T {
                 const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-                throw parser::error::UnexpectedToken(token.description(),
-                                                     T::description());
+                throw error::UnexpectedToken(token.description(),
+                                             T::description());
             });
         }
     }
@@ -183,8 +182,7 @@ class Token : public detail::TokenVariant {
         this->visit([](auto&& arg) -> void {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw parser::error::UnexpectedToken(token.description(),
-                                                 T::description());
+            throw error::UnexpectedToken(token.description(), T::description());
         });
     }
 };

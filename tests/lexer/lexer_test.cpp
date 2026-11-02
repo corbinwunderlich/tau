@@ -12,6 +12,7 @@
 using Catch::Matchers::Equals;
 using Catch::Matchers::SizeIs;
 
+using Catch::Matchers::StartsWith;
 using lexer::Lexer;
 using lexer::Token;
 namespace token = lexer::token;
@@ -40,10 +41,7 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     SECTION("lex empty character literal") {
         Lexer lexer("''");
 
-        auto tokens = lexer.lex();
-
-        REQUIRE_THAT(tokens, SizeIs(1));
-        REQUIRE_NOTHROW(tokens[0].expect<token::Invalid>());
+        REQUIRE_THROWS_WITH(lexer.lex(), StartsWith("empty character literal"));
     }
 
     SECTION("lex basic character literal") {

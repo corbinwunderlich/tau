@@ -21,7 +21,7 @@ class Lexer {
         : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
     Lexer(std::string source) : Lexer(src::Sources(std::move(source))) {}
 
-    [[nodiscard]] auto lex() -> TokenStream;
+    [[nodiscard]] auto lex() noexcept(false) -> TokenStream;
 
     [[nodiscard]] auto extract_sources() noexcept
         -> std::unique_ptr<src::Sources>;
@@ -43,14 +43,14 @@ class Lexer {
 
     void skip_whitespace();
 
-    auto escape_character(char character) -> std::optional<char>;
+    auto escape_character(char character) noexcept(false) -> char;
 
     auto read_type() -> Token;
     auto read_identifier_or_keyword() -> Token;
     auto read_comment(CommentType type) -> Token;
-    auto read_string_literal() -> std::optional<std::string>;
-    auto read_character_literal() -> std::optional<char>;
-    auto read_integer_literal() -> std::optional<uint64_t>;
+    auto read_string_literal() noexcept(false) -> std::string;
+    auto read_character_literal() noexcept(false) -> char;
+    auto read_integer_literal() noexcept(false) -> uint64_t;
     auto read_literal_token() -> Token;
 
     auto lex_next_token() -> Token;

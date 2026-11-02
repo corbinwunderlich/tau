@@ -6,6 +6,13 @@
 #include <string_view>
 #include <system_error>
 
+#include <tau/error/bad_escape_sequence.hpp>
+#include <tau/error/bad_integer_literal.hpp>
+#include <tau/error/bad_integer_literal_prefix.hpp>
+#include <tau/error/empty_character_literal.hpp>
+#include <tau/error/invalid_token.hpp>
+#include <tau/error/unexpected_token.hpp>
+#include <tau/lexer/base.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
@@ -13,14 +20,8 @@
 using std::nullopt;
 using std::optional;
 
+using lexer::Base;
 using lexer::Lexer;
-
-enum class Base : uint8_t {
-    Binary = 2,
-    Octal = 8,
-    Decimal = 10,
-    Hexadecimal = 16
-};
 
 auto Lexer::lex() -> TokenStream {
     TokenStream token_stream;
@@ -72,7 +73,7 @@ inline void Lexer::skip_whitespace() {
     }
 }
 
-auto Lexer::escape_character(char character) -> optional<char> {
+auto Lexer::escape_character(char character) -> char {
     switch (character) {
         case '0':
             return '\0';
@@ -102,11 +103,12 @@ auto Lexer::escape_character(char character) -> optional<char> {
                                 this->srcs->data() + this->pos + 2, hex, 16);
 
             if (ec != std::errc()) {
-                return nullopt;
+                throw error::BadEscapeSequence("invalid hex code");
             }
 
             if (hex > std::numeric_limits<char>::max()) {
-                return nullopt;
+                throw error::BadEscapeSequence(
+                    "hex code is larger than a char");
             }
 
             this->advance();
@@ -114,7 +116,7 @@ auto Lexer::escape_character(char character) -> optional<char> {
             return hex;
         }
         default:
-            return nullopt;
+            throw error::BadEscapeSequence();
     }
 }
 
@@ -187,7 +189,7 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
     return token::Comment{{}, comment};
 }
 
-inline auto Lexer::read_string_literal() -> optional<std::string> {
+inline auto Lexer::read_string_literal() -> std::string {
     this->advance();
 
     const size_t start = this->pos;
@@ -202,7 +204,7 @@ inline auto Lexer::read_string_literal() -> optional<std::string> {
     }
 
     if (!current.has_value()) {
-        return nullopt;
+        throw error::UnexpectedToken(token::Eof::description(), '"');
     }
 
     this->advance();
@@ -210,54 +212,59 @@ inline auto Lexer::read_string_literal() -> optional<std::string> {
     return std::string(this->srcs->range(start, this->pos - start - 1));
 }
 
-inline auto Lexer::read_character_literal() -> optional<char> {
+inline auto Lexer::read_character_literal() -> char {
     this->advance();
 
     optional<char> current = this->current();
 
-    if (!current.has_value()) {
-        return nullopt;
+    if (*current == '\'') {
+        throw error::EmptyCharacterLiteral();
     }
 
     if (*current != '\\') {
-        const char character = *current;
+        this->advance();
 
-        if (this->advance(); this->current() != '\'') {
-            return nullopt;
+        if (optional<char> next_char = this->current();
+            !next_char.has_value() || *next_char != '\'') {
+            if (!next_char.has_value()) {
+                throw error::UnexpectedToken(token::Eof::description(), '\'');
+            }
+
+            throw error::UnexpectedToken(*next_char, '\'');
         }
 
         this->advance();
 
-        return character;
+        return *current;
     }
 
     this->advance(current);
 
-    optional<char> character = this->escape_character(*current);
+    if (!current.has_value()) {
+        throw error::BadEscapeSequence();
+    }
+
+    char character = this->escape_character(*current);
 
     this->advance(2);
 
     return character;
 }
 
-inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
+inline auto Lexer::read_integer_literal() -> uint64_t {
     optional<char> current = this->current();
-
-    if (!current.has_value()) {
-        return nullopt;
-    }
 
     size_t start = this->pos;
     Base base = Base::Decimal;
 
     if (*current == '0') {
-        this->advance(current);
+        const optional<char> peek = this->peek(1);
 
-        if (!current.has_value()) {
-            return nullopt;
+        if (!peek.has_value()) {
+            return 0;
         }
 
-        switch (*current) {
+        switch (*peek) {
             case 'x':
                 base = Base::Hexadecimal;
                 break;
@@ -268,10 +275,10 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
                 base = Base::Binary;
                 break;
             default:
-                return nullopt;
+                throw error::BadIntegerLiteralPrefix(*peek);
         }
 
-        this->advance(current);
+        this->advance(current, 2);
 
         start = this->pos;
     }
@@ -316,7 +323,7 @@ inline auto Lexer::read_integer_literal() -> optional<uint64_t> {
                                          static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
-        return nullopt;
+        throw error::BadIntegerLiteral(base);
     }
 
     return number;
@@ -430,7 +437,7 @@ inline auto Lexer::read_literal_token() -> Token {
             this->advance();
             return token::ForwardSlash{};
         default:
-            return token::Invalid{};
+            throw error::InvalidToken(*current);
     }
 }
 
@@ -457,31 +464,19 @@ auto Lexer::lex_next_token() -> Token {
     if (std::isdigit(static_cast<unsigned char>(current)) != 0) {
         const optional<uint64_t> number = this->read_integer_literal();
 
-        if (!number.has_value()) {
-            return token::Invalid{};
-        }
-
         return token::IntegerLiteral{{}, *number};
     }
 
     if (current == '"') {
-        const optional<std::string> string = this->read_string_literal();
+        std::string string = this->read_string_literal();
 
-        if (!string.has_value()) {
-            return token::Invalid{};
-        }
-
-        return token::StringLiteral{{}, *string};
+        return token::StringLiteral{{}, std::move(string)};
     }
 
     if (current == '\'') {
-        const optional<char> character = this->read_character_literal();
+        const char character = this->read_character_literal();
 
-        if (!character.has_value()) {
-            return token::Invalid{};
-        }
-
-        return token::CharacterLiteral{{}, *character};
+        return token::CharacterLiteral{{}, character};
     }
 
     return this->read_literal_token();

@@ -10,7 +10,6 @@
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
-#include <tau/parser/error.hpp>
 
 namespace parser {
 class Parser;

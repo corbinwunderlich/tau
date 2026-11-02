@@ -4,15 +4,14 @@
 #include <vector>
 
 #include <tau/ast/node.hpp>
+#include <tau/error/too_many_parameters.hpp>
 #include <tau/lexer/token.hpp>
-#include <tau/parser/error.hpp>
 #include <tau/parser/parser.hpp>
 
 namespace node = ast::node;
 using lexer::Token;
 namespace token = lexer::token;
 using parser::Parser;
-namespace error = parser::error;
 
 auto Parser::next_token() -> lexer::Token {
     this->pos++;

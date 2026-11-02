@@ -7,7 +7,6 @@
 #include <tau/ast/node.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
-#include <tau/parser/error.hpp>
 #include <tau/src/src.hpp>
 
 namespace parser {
