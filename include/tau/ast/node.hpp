@@ -5,6 +5,7 @@
 #include <memory>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
@@ -65,8 +66,7 @@ struct Integer {
 struct FunctionCall {
     Ident ident;
 
-    std::unique_ptr<Expr[]> params;
-    uint8_t param_count;
+    std::vector<Expr> params;
 
     static auto parse(parser::Parser& parser,
                       lexer::token::Identifier identifier) noexcept(false)
@@ -131,8 +131,7 @@ struct Expr : std::variant<Term, Add, Sub> {
 };
 
 struct Block {
-    std::unique_ptr<Stmt[]> stmts;
-    size_t stmt_count;
+    std::vector<Stmt> statements;
 
     static auto parse(parser::Parser& parser) noexcept(false) -> Block;
 };
@@ -155,8 +154,7 @@ struct FunctionDecl {
         Param(Ident i, Type t) : ident(i), type(t) {};
     };
 
-    std::unique_ptr<Param[]> params;
-    uint8_t param_count;
+    std::vector<Param> params;
 
     Type return_type;
 

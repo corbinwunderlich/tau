@@ -69,13 +69,7 @@ auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
 
     params.shrink_to_fit();
 
-    const auto param_count = static_cast<uint8_t>(params.size());
-
-    auto allocated_params = std::make_unique<Expr[]>(param_count);
-    std::move(params.begin(), params.end(), allocated_params.get());
-
-    return FunctionCall{Ident(identifier), std::move(allocated_params),
-                        param_count};
+    return FunctionCall{Ident(identifier), std::move(params)};
 }
 
 auto node::Assignment::parse(Parser& parser, token::Identifier identifier)
@@ -213,12 +207,7 @@ auto node::Block::parse(Parser& parser) -> Block {
         statements.push_back(std::move(statement));
     }
 
-    const size_t statement_count = statements.size();
-
-    auto allocated_statements = std::make_unique<Stmt[]>(statement_count);
-    std::move(statements.begin(), statements.end(), allocated_statements.get());
-
-    return Block{std::move(allocated_statements), statement_count};
+    return Block{std::move(statements)};
 }
 
 auto node::VarDecl::parse(Parser& parser) -> VarDecl {
@@ -277,13 +266,8 @@ auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
 
     const auto return_type = parser.next_token().get<token::Type>();
 
-    const auto param_count = static_cast<uint8_t>(params.size());
-
-    auto allocated_params = std::make_unique<Param[]>(param_count);
-    std::move(params.begin(), params.end(), allocated_params.get());
-
-    return FunctionDecl{Ident(ident), std::move(allocated_params), param_count,
-                        Type(return_type), Block::parse(parser)};
+    return FunctionDecl{Ident(ident), std::move(params), Type(return_type),
+                        Block::parse(parser)};
 }
 
 auto node::Return::parse(parser::Parser& parser) -> Return {
@@ -341,18 +325,13 @@ auto node::Decl::parse(Parser& parser) -> Decl {
 }
 
 auto Parser::parse() && -> ast::Ast {
-    std::vector<node::Decl> declarations;
+    std::vector<node::Decl> nodes;
 
     while (this->pos < this->tokens.size()) {
-        declarations.push_back(node::Decl::parse(*this));
+        nodes.push_back(node::Decl::parse(*this));
     }
 
-    declarations.shrink_to_fit();
+    nodes.shrink_to_fit();
 
-    const size_t node_count = declarations.size();
-
-    auto nodes = std::make_unique<node::Decl[]>(node_count);
-    std::move(declarations.begin(), declarations.end(), nodes.get());
-
-    return {std::move(nodes), node_count};
+    return {std::move(nodes)};
 }
