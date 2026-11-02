@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -18,10 +19,11 @@ using TokenStream = std::vector<Token>;
 
 class Lexer {
   public:
-    Lexer(std::string lexeme) : Lexer(source::FileSource(std::move(lexeme))) {}
-
-    template <typename T>
+    template <typename T,
+              typename = std::enable_if_t<std::is_base_of_v<source::Source, T>>>
     Lexer(const T& source) : source(std::make_unique<T>(std::move(source))) {}
+
+    Lexer(std::string source) : Lexer(source::FileSource(std::move(source))) {}
 
     [[nodiscard]]
     auto lex() noexcept(false) -> TokenStream;

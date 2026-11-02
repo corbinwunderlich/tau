@@ -1,10 +1,14 @@
 #include <cstddef>
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 
 #include <tau/source/file_source.hpp>
 
 namespace source {
+FileSource::FileSource(std::string s) : file(std::move(s)) {}
+
 auto FileSource::length() const noexcept -> size_t {
     return this->file.length();
 }

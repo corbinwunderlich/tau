@@ -12,10 +12,8 @@ using Catch::Matchers::Equals;
 using Catch::Matchers::SizeIs;
 
 using Catch::Matchers::StartsWith;
-using lexer::Lexer;
-using lexer::Token;
-namespace token = lexer::token;
 
+namespace lexer {
 TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     SECTION("lex string literal") {
         Lexer lexer("\"test\"");
@@ -202,3 +200,4 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
             Equals("/* this is the first line\nand this is the second */"));
     }
 }
+}  // namespace lexer
