@@ -8,7 +8,8 @@
 #include <vector>
 
 #include <tau/lexer/pool.hpp>
-#include <tau/src/src.hpp>
+#include <tau/source/file_source.hpp>
+#include <tau/source/source.hpp>
 
 #include "token.hpp"
 
@@ -17,20 +18,21 @@ using TokenStream = std::vector<Token>;
 
 class Lexer {
   public:
-    Lexer(src::Sources sources)
-        : srcs(std::make_unique<src::Sources>(std::move(sources))) {}
-    Lexer(std::string source) : Lexer(src::Sources(std::move(source))) {}
+    Lexer(std::string lexeme) : Lexer(source::FileSource(std::move(lexeme))) {}
+
+    template <typename T>
+    Lexer(const T& source) : source(std::make_unique<T>(std::move(source))) {}
 
     [[nodiscard]] auto lex() noexcept(false) -> TokenStream;
 
-    [[nodiscard]] auto extract_sources() noexcept
-        -> std::unique_ptr<src::Sources>;
+    [[nodiscard]] auto extract_source() noexcept
+        -> std::unique_ptr<source::Source>;
     [[nodiscard]] auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
 
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
-    std::unique_ptr<src::Sources> srcs;
+    std::unique_ptr<source::Source> source;
     std::unique_ptr<lexer::Pool> pool =
         std::make_unique<lexer::Pool>(lexer::Pool{});
 

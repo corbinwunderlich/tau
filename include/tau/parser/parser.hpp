@@ -7,19 +7,19 @@
 #include <tau/ast/node.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
-#include <tau/src/src.hpp>
+#include <tau/source/source.hpp>
 
 namespace parser {
 class Parser {
   public:
     Parser(lexer::TokenStream token_stream,
-           std::unique_ptr<src::Sources> sources,
+           std::unique_ptr<source::Source> source,
            std::unique_ptr<lexer::Pool> pool)
         : tokens(std::move(token_stream)),
-          srcs(std::move(sources)),
-          pool(std::move(pool)) {};
+          source(std::move(source)),
+          pool(std::move(pool)) {}
     Parser(lexer::Lexer lexer)
-        : Parser(lexer.lex(), lexer.extract_sources(), lexer.extract_pool()) {}
+        : Parser(lexer.lex(), lexer.extract_source(), lexer.extract_pool()) {}
 
     [[nodiscard]] auto parse() && noexcept(false) -> ast::Ast;
 
@@ -37,7 +37,7 @@ class Parser {
 
   private:
     lexer::TokenStream tokens;
-    std::unique_ptr<src::Sources> srcs;
+    std::unique_ptr<source::Source> source;
     std::unique_ptr<lexer::Pool> pool;
 
     size_t pos = 0;

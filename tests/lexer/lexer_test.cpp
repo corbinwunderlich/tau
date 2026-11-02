@@ -7,7 +7,6 @@
 
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/token.hpp>
-#include <tau/src/src.hpp>
 
 using Catch::Matchers::Equals;
 using Catch::Matchers::SizeIs;
