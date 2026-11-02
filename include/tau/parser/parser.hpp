@@ -21,7 +21,8 @@ class Parser {
     Parser(lexer::Lexer lexer)
         : Parser(lexer.lex(), lexer.extract_source(), lexer.extract_pool()) {}
 
-    [[nodiscard]] auto parse() && noexcept(false) -> ast::Ast;
+    [[nodiscard]]
+    auto parse() && noexcept(false) -> ast::Ast;
 
     friend struct ast::node::FunctionCall;
     friend struct ast::node::Assignment;

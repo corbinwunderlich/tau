@@ -28,7 +28,8 @@ class Ident {
     Ident() = default;
     Ident(lexer::token::Identifier identifier) : index(identifier.index) {};
 
-    [[nodiscard]] auto name(const lexer::Pool& pool) const -> std::string_view {
+    [[nodiscard]]
+    auto name(const lexer::Pool& pool) const -> std::string_view {
         const std::string_view name = pool.resolve(this->index);
 
         return name;
@@ -43,7 +44,8 @@ class Type {
     Type() = default;
     Type(lexer::token::Type type) : index(type.index) {};
 
-    [[nodiscard]] auto name(const lexer::Pool& pool) const -> std::string_view {
+    [[nodiscard]]
+    auto name(const lexer::Pool& pool) const -> std::string_view {
         const std::string_view name = pool.resolve(this->index);
 
         return name;

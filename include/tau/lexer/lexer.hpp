@@ -23,11 +23,14 @@ class Lexer {
     template <typename T>
     Lexer(const T& source) : source(std::make_unique<T>(std::move(source))) {}
 
-    [[nodiscard]] auto lex() noexcept(false) -> TokenStream;
+    [[nodiscard]]
+    auto lex() noexcept(false) -> TokenStream;
 
-    [[nodiscard]] auto extract_source() noexcept
-        -> std::unique_ptr<source::Source>;
-    [[nodiscard]] auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
+    [[nodiscard]]
+    auto extract_source() noexcept -> std::unique_ptr<source::Source>;
+
+    [[nodiscard]]
+    auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
 
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
@@ -40,8 +43,12 @@ class Lexer {
 
     void advance(size_t ahead = 1);
     void advance(std::optional<char>& current, size_t ahead = 1);
-    [[nodiscard]] auto current() const -> std::optional<char>;
-    [[nodiscard]] auto peek(size_t ahead = 0) const -> std::optional<char>;
+
+    [[nodiscard]]
+    auto current() const -> std::optional<char>;
+
+    [[nodiscard]]
+    auto peek(size_t ahead = 0) const -> std::optional<char>;
 
     void skip_whitespace();
 

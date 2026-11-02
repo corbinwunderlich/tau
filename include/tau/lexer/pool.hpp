@@ -11,6 +11,8 @@ class Pool {
 
   public:
     auto insert(std::string_view identifier) noexcept -> size_t;
-    [[nodiscard]] auto resolve(size_t index) const noexcept -> std::string_view;
+
+    [[nodiscard]]
+    auto resolve(size_t index) const noexcept -> std::string_view;
 };
 }  // namespace lexer

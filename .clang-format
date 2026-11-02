@@ -4,6 +4,7 @@ BasedOnStyle: Chromium
 IndentWidth: 4
 TabWidth: 4
 AccessModifierOffset: -2
+BreakAfterAttributes: Always
 
 IncludeBlocks: Regroup
 IncludeCategories:

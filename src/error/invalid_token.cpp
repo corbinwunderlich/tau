@@ -6,11 +6,13 @@
 using error::InvalidToken;
 
 namespace {
-[[maybe_unused]] auto quote_invalid_token(std::string_view sv) -> std::string {
+[[maybe_unused]]
+auto quote_invalid_token(std::string_view sv) -> std::string {
     return std::string().append(sv);
 }
 
-[[maybe_unused]] auto quote_invalid_token(char c) -> std::string {
+[[maybe_unused]]
+auto quote_invalid_token(char c) -> std::string {
     return std::string{"`"} + c + '`';
 }
 

@@ -164,12 +164,14 @@ class Token : public detail::TokenVariant {
     }
 
     template <typename... T>
-    [[nodiscard]] constexpr auto is() const& noexcept -> bool {
+    [[nodiscard]]
+    constexpr auto is() const& noexcept -> bool {
         return (std::holds_alternative<T>(*this) || ...);
     }
 
     template <typename... T>
-    [[nodiscard]] constexpr auto is_not() const& noexcept -> bool {
+    [[nodiscard]]
+    constexpr auto is_not() const& noexcept -> bool {
         return (!std::holds_alternative<T>(*this) && ...);
     }
 
