@@ -6,8 +6,8 @@
 namespace lexer {
 class Pool {
   private:
-    std::vector<std::string_view> table;
-    std::unordered_map<std::string_view, size_t> map;
+    std::vector<std::string_view> table_;
+    std::unordered_map<std::string_view, size_t> map_;
 
   public:
     auto insert(std::string_view identifier) noexcept -> size_t;

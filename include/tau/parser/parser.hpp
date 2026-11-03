@@ -15,9 +15,9 @@ class Parser {
     Parser(lexer::TokenStream token_stream,
            std::unique_ptr<source::Source> source,
            std::unique_ptr<lexer::Pool> pool)
-        : tokens(std::move(token_stream)),
-          source(std::move(source)),
-          pool(std::move(pool)) {}
+        : tokens_(std::move(token_stream)),
+          source_(std::move(source)),
+          pool_(std::move(pool)) {}
     Parser(lexer::Lexer lexer)
         : Parser(lexer.lex(), lexer.extract_source(), lexer.extract_pool()) {}
 
@@ -37,11 +37,11 @@ class Parser {
     friend struct ast::node::Decl;
 
   private:
-    lexer::TokenStream tokens;
-    std::unique_ptr<source::Source> source;
-    std::unique_ptr<lexer::Pool> pool;
+    lexer::TokenStream tokens_;
+    std::unique_ptr<source::Source> source_;
+    std::unique_ptr<lexer::Pool> pool_;
 
-    size_t pos = 0;
+    size_t pos_ = 0;
 
     auto next_token() -> lexer::Token;
     auto peek_token() -> lexer::Token;

@@ -10,7 +10,7 @@
 namespace source {
 class FileSource : public Source {
   private:
-    std::string file;
+    std::string file_;
 
   public:
     FileSource(std::string s);

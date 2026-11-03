@@ -22,15 +22,15 @@ struct Stmt;
 
 class Ident {
   private:
-    size_t index;
+    size_t index_;
 
   public:
     Ident() = default;
-    Ident(lexer::token::Identifier identifier) : index(identifier.index) {};
+    Ident(lexer::token::Identifier identifier) : index_(identifier.index) {};
 
     [[nodiscard]]
     auto name(const lexer::Pool& pool) const -> std::string_view {
-        const std::string_view name = pool.resolve(this->index);
+        const std::string_view name = pool.resolve(this->index_);
 
         return name;
     }
@@ -38,15 +38,15 @@ class Ident {
 
 class Type {
   private:
-    size_t index;
+    size_t index_;
 
   public:
     Type() = default;
-    Type(lexer::token::Type type) : index(type.index) {};
+    Type(lexer::token::Type type) : index_(type.index) {};
 
     [[nodiscard]]
     auto name(const lexer::Pool& pool) const -> std::string_view {
-        const std::string_view name = pool.resolve(this->index);
+        const std::string_view name = pool.resolve(this->index_);
 
         return name;
     }

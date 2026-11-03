@@ -14,23 +14,23 @@ namespace token = lexer::token;
 using parser::Parser;
 
 auto Parser::next_token() -> lexer::Token {
-    this->pos++;
+    this->pos_++;
 
-    if (this->pos >= this->tokens.size()) {
+    if (this->pos_ >= this->tokens_.size()) {
         return lexer::token::Eof{};
     }
 
-    return this->tokens[this->pos];
+    return this->tokens_[this->pos_];
 }
 
 auto Parser::peek_token() -> lexer::Token {
-    const size_t index = this->pos + 1;
+    const size_t index = this->pos_ + 1;
 
-    if (index >= this->tokens.size()) {
+    if (index >= this->tokens_.size()) {
         return lexer::token::Eof{};
     }
 
-    return this->tokens[index];
+    return this->tokens_[index];
 }
 
 auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
@@ -253,7 +253,7 @@ auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
         params.emplace_back(Ident(param_ident), Type(param_type));
 
         if (params.size() > error::TooManyParameters::max_parameters()) {
-            throw error::TooManyParameters(parser.pool->resolve(ident.index));
+            throw error::TooManyParameters(parser.pool_->resolve(ident.index));
         }
 
         if (is_last_param) {
@@ -326,7 +326,7 @@ auto node::Decl::parse(Parser& parser) -> Decl {
 auto Parser::parse() && -> ast::Ast {
     std::vector<node::Decl> nodes;
 
-    while (this->pos < this->tokens.size()) {
+    while (this->pos_ < this->tokens_.size()) {
         nodes.push_back(node::Decl::parse(*this));
     }
 

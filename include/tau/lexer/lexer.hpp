@@ -21,7 +21,7 @@ class Lexer {
   public:
     template <typename T,
               typename = std::enable_if_t<std::is_base_of_v<source::Source, T>>>
-    Lexer(const T& source) : source(std::make_unique<T>(std::move(source))) {}
+    Lexer(const T& source) : source_(std::make_unique<T>(std::move(source))) {}
 
     Lexer(std::string source) : Lexer(source::FileSource(std::move(source))) {}
 
@@ -37,11 +37,11 @@ class Lexer {
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
-    std::unique_ptr<source::Source> source;
-    std::unique_ptr<lexer::Pool> pool =
+    std::unique_ptr<source::Source> source_;
+    std::unique_ptr<lexer::Pool> pool_ =
         std::make_unique<lexer::Pool>(lexer::Pool{});
 
-    size_t pos = 0;
+    size_t pos_ = 0;
 
     void advance(size_t ahead = 1);
     void advance(std::optional<char>& current, size_t ahead = 1);
