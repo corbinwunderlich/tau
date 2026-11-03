@@ -27,7 +27,7 @@ using lexer::Lexer;
 auto Lexer::lex() -> TokenStream {
     TokenStream token_stream;
 
-    while (this->pos_ < this->source_->length()) {
+    while (pos_ < source_->length()) {
         Token token = this->lex_next_token();
 
         token_stream.push_back(token);
@@ -38,31 +38,31 @@ auto Lexer::lex() -> TokenStream {
     return token_stream;
 }
 
-auto Lexer::extract_source() noexcept -> std::unique_ptr<source::Source> {
-    return std::move(this->source_);
+auto Lexer::source() const noexcept -> std::shared_ptr<source::Source> {
+    return source_;
 }
 
-auto Lexer::extract_pool() noexcept -> std::unique_ptr<lexer::Pool> {
-    return std::move(this->pool_);
+auto Lexer::pool() const noexcept -> std::shared_ptr<lexer::Pool> {
+    return pool_;
 }
 
 inline void Lexer::advance(size_t ahead) {
-    this->pos_ += ahead;
+    pos_ += ahead;
 }
 
 inline void Lexer::advance(optional<char>& current, size_t ahead) {
-    this->pos_ += ahead;
+    pos_ += ahead;
     current = this->current();
 }
 
 auto Lexer::current() const -> optional<char> {
-    return this->source_->at(this->pos_);
+    return source_->at(pos_);
 }
 
 auto Lexer::peek(size_t ahead) const -> optional<char> {
-    const size_t index = this->pos_ + ahead;
+    const size_t index = pos_ + ahead;
 
-    return this->source_->at(index);
+    return source_->at(index);
 }
 
 inline void Lexer::skip_whitespace() {
@@ -100,8 +100,7 @@ auto Lexer::escape_character(char character) -> char {
             char hex = 0;
 
             const auto [_, ec] = std::from_chars(
-                this->source_->data() + this->pos_,
-                this->source_->data() + this->pos_ + 2, hex, 16);
+                source_->data() + pos_, source_->data() + pos_ + 2, hex, 16);
 
             if (ec != std::errc()) {
                 throw error::BadEscapeSequence("invalid hex code");
@@ -122,7 +121,7 @@ auto Lexer::escape_character(char character) -> char {
 }
 
 inline auto Lexer::read_type() -> Token {
-    const size_t start = this->pos_;
+    const size_t start = pos_;
 
     optional<char> current = this->current();
 
@@ -131,8 +130,7 @@ inline auto Lexer::read_type() -> Token {
         this->advance(current);
     }
 
-    const std::string_view identifier =
-        this->source_->range(start, this->pos_ - start);
+    const std::string_view identifier = source_->range(start, pos_ - start);
 
     const size_t index = this->pool_->insert(identifier);
 
@@ -140,7 +138,7 @@ inline auto Lexer::read_type() -> Token {
 }
 
 inline auto Lexer::read_identifier_or_keyword() -> Token {
-    const size_t start = this->pos_;
+    const size_t start = pos_;
 
     optional<char> current = this->current();
 
@@ -149,8 +147,7 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
         this->advance(current);
     }
 
-    const std::string_view identifier =
-        this->source_->range(start, this->pos_ - start);
+    const std::string_view identifier = source_->range(start, pos_ - start);
 
     if (const auto keyword = Keywords::lookup(identifier);
         keyword.has_value()) {
@@ -163,7 +160,7 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
 }
 
 inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
-    const size_t start = this->pos_;
+    const size_t start = pos_;
 
     optional<char> current = this->current();
 
@@ -185,7 +182,7 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
             break;
     }
 
-    const auto comment = this->source_->range(start, this->pos_ - start);
+    const auto comment = source_->range(start, pos_ - start);
 
     return token::Comment{{}, comment};
 }
@@ -193,7 +190,7 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
 inline auto Lexer::read_string_literal() -> std::string {
     this->advance();
 
-    const size_t start = this->pos_;
+    const size_t start = pos_;
 
     optional<char> current = this->current();
     bool escaped = false;
@@ -210,7 +207,7 @@ inline auto Lexer::read_string_literal() -> std::string {
 
     this->advance();
 
-    return std::string(this->source_->range(start, this->pos_ - start - 1));
+    return std::string(source_->range(start, pos_ - start - 1));
 }
 
 inline auto Lexer::read_character_literal() -> char {
@@ -255,7 +252,7 @@ inline auto Lexer::read_character_literal() -> char {
 inline auto Lexer::read_integer_literal() -> uint64_t {
     optional<char> current = this->current();
 
-    size_t start = this->pos_;
+    size_t start = pos_;
     Base base = Base::Decimal;
 
     if (*current == '0') {
@@ -281,7 +278,7 @@ inline auto Lexer::read_integer_literal() -> uint64_t {
 
         this->advance(current, 2);
 
-        start = this->pos_;
+        start = pos_;
     }
 
     while (current.has_value()) {
@@ -319,9 +316,9 @@ inline auto Lexer::read_integer_literal() -> uint64_t {
 
     uint64_t number;
 
-    const auto [_, ec] = std::from_chars(this->source_->data() + start,
-                                         this->source_->data() + this->pos_,
-                                         number, static_cast<uint8_t>(base));
+    const auto [_, ec] =
+        std::from_chars(source_->data() + start, source_->data() + pos_, number,
+                        static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
         throw error::BadIntegerLiteral(base);

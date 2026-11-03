@@ -4,7 +4,6 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -19,27 +18,28 @@ using TokenStream = std::vector<Token>;
 
 class Lexer {
   public:
-    template <typename T,
-              typename = std::enable_if_t<std::is_base_of_v<source::Source, T>>>
-    Lexer(const T& source) : source_(std::make_unique<T>(std::move(source))) {}
+    Lexer(std::shared_ptr<source::Source> source)
+        : source_(std::move(source)) {}
 
-    Lexer(std::string source) : Lexer(source::FileSource(std::move(source))) {}
+    Lexer(std::string source)
+        : Lexer(std::make_shared<source::FileSource>(
+              source::FileSource(std::move(source)))) {}
 
     [[nodiscard]]
     auto lex() noexcept(false) -> TokenStream;
 
     [[nodiscard]]
-    auto extract_source() noexcept -> std::unique_ptr<source::Source>;
+    auto source() const noexcept -> std::shared_ptr<source::Source>;
 
     [[nodiscard]]
-    auto extract_pool() noexcept -> std::unique_ptr<lexer::Pool>;
+    auto pool() const noexcept -> std::shared_ptr<lexer::Pool>;
 
   private:
     enum class CommentType : uint8_t { SingleLine, MultiLine };
 
-    std::unique_ptr<source::Source> source_;
-    std::unique_ptr<lexer::Pool> pool_ =
-        std::make_unique<lexer::Pool>(lexer::Pool{});
+    std::shared_ptr<source::Source> source_;
+    std::shared_ptr<lexer::Pool> pool_ =
+        std::make_shared<lexer::Pool>(lexer::Pool{});
 
     size_t pos_ = 0;
 

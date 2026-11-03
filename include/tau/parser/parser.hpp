@@ -12,14 +12,14 @@
 namespace parser {
 class Parser {
   public:
-    Parser(lexer::TokenStream token_stream,
-           std::unique_ptr<source::Source> source,
-           std::unique_ptr<lexer::Pool> pool)
-        : tokens_(std::move(token_stream)),
+    Parser(lexer::TokenStream tokens,
+           std::shared_ptr<source::Source> source,
+           std::shared_ptr<lexer::Pool> pool)
+        : tokens_(std::move(tokens)),
           source_(std::move(source)),
           pool_(std::move(pool)) {}
     Parser(lexer::Lexer lexer)
-        : Parser(lexer.lex(), lexer.extract_source(), lexer.extract_pool()) {}
+        : Parser(lexer.lex(), lexer.source(), lexer.pool()) {}
 
     [[nodiscard]]
     auto parse() && noexcept(false) -> ast::Ast;
@@ -38,8 +38,8 @@ class Parser {
 
   private:
     lexer::TokenStream tokens_;
-    std::unique_ptr<source::Source> source_;
-    std::unique_ptr<lexer::Pool> pool_;
+    std::shared_ptr<source::Source> source_;
+    std::shared_ptr<lexer::Pool> pool_;
 
     size_t pos_ = 0;
 
