@@ -12,58 +12,56 @@
 
 #include <tau/error/unexpected_token.hpp>
 
-#define BLANK_TOKEN static_assert(true);
+#define TAU_KEYWORDS(X)                                                                              \
+    X(Fn, "fn", static_assert(true);)                                                                \
+    X(Return, "return", static_assert(true);)                                                        \
+                                                                                                     \
+    /*X(Let, ;)*/                                                                                    \
+    X(Var, "var", static_assert(true);)                                                              \
+                                                                                                     \
+    /*X(If, static_assert(true);)                                                                    \
+    X(Else, static_assert(true);)                                                                    \
+                                                                                                   \ \
+    X(While, static_assert(true);)                                                                   \
+    X(For, static_assert(true);)                                                                     \
+    X(Continue, static_assert(true);)                                                                \
+    X(Break, ;)*/
 
-#define KEYWORDS(X)                                                                                  \
-    X(Fn, "fn", BLANK_TOKEN)                                                                         \
-    X(Return, "return", BLANK_TOKEN)                                                                 \
+#define TAU_SYMBOLS(X)                                                                               \
+    X(Semicolon, ';', static_assert(true);)                                                          \
+    X(Comma, ',', static_assert(true);)                                                              \
                                                                                                      \
-    /*X(Let, BLANK_TOKEN)*/                                                                          \
-    X(Var, "var", BLANK_TOKEN)                                                                       \
+    X(LeftParen, '(', static_assert(true);)                                                          \
+    X(RightParen, ')', static_assert(true);)                                                         \
+    X(LeftBrace, '{', static_assert(true);)                                                          \
+    X(RightBrace, '}', static_assert(true);)                                                         \
+    X(LeftBracket, '[', static_assert(true);)                                                        \
+    X(RightBracket, ']', static_assert(true);)                                                       \
                                                                                                      \
-    /*X(If, BLANK_TOKEN)                                                                             \
-    X(Else, BLANK_TOKEN)                                                                             \
+    X(Equals, '=', static_assert(true);)                                                             \
+    /*X(DoubleEquals, static_assert(true);)                                                          \
+    X(NotEquals, static_assert(true);)                                                               \
                                                                                                    \ \
-    X(While, BLANK_TOKEN)                                                                            \
-    X(For, BLANK_TOKEN)                                                                              \
-    X(Continue, BLANK_TOKEN)                                                                         \
-    X(Break, BLANK_TOKEN)*/
+    X(LessThan, static_assert(true);)                                                                \
+    X(GreaterThan, static_assert(true);)                                                             \
+    X(LessThanEquals, static_assert(true);)                                                          \
+    X(GreaterThanEquals, static_assert(true);)                                                       \
+                                                                                                   \ \
+    X(LogicalOr, static_assert(true);)                                                               \
+    X(LogicalAnd, static_assert(true);)                                                              \
+                                                                                                   \ \
+    X(Or, static_assert(true);)                                                                      \
+    X(Xor, static_assert(true);)                                                                     \
+    X(And, ;)*/                                                                                      \
+                                                                                                     \
+    X(Plus, '+', static_assert(true);)                                                               \
+    X(Minus, '-', static_assert(true);)                                                              \
+    X(Asterisk, '*', static_assert(true);)                                                           \
+    X(ForwardSlash, '/', static_assert(true);)
 
-#define SYMBOLS(X)                                                                                   \
-    X(Semicolon, ';', BLANK_TOKEN)                                                                   \
-    X(Comma, ',', BLANK_TOKEN)                                                                       \
-                                                                                                     \
-    X(LeftParen, '(', BLANK_TOKEN)                                                                   \
-    X(RightParen, ')', BLANK_TOKEN)                                                                  \
-    X(LeftBrace, '{', BLANK_TOKEN)                                                                   \
-    X(RightBrace, '}', BLANK_TOKEN)                                                                  \
-    X(LeftBracket, '[', BLANK_TOKEN)                                                                 \
-    X(RightBracket, ']', BLANK_TOKEN)                                                                \
-                                                                                                     \
-    X(Equals, '=', BLANK_TOKEN)                                                                      \
-    /*X(DoubleEquals, BLANK_TOKEN)                                                                   \
-    X(NotEquals, BLANK_TOKEN)                                                                        \
-                                                                                                   \ \
-    X(LessThan, BLANK_TOKEN)                                                                         \
-    X(GreaterThan, BLANK_TOKEN)                                                                      \
-    X(LessThanEquals, BLANK_TOKEN)                                                                   \
-    X(GreaterThanEquals, BLANK_TOKEN)                                                                \
-                                                                                                   \ \
-    X(LogicalOr, BLANK_TOKEN)                                                                        \
-    X(LogicalAnd, BLANK_TOKEN)                                                                       \
-                                                                                                   \ \
-    X(Or, BLANK_TOKEN)                                                                               \
-    X(Xor, BLANK_TOKEN)                                                                              \
-    X(And, BLANK_TOKEN)*/                                                                            \
-                                                                                                     \
-    X(Plus, '+', BLANK_TOKEN)                                                                        \
-    X(Minus, '-', BLANK_TOKEN)                                                                       \
-    X(Asterisk, '*', BLANK_TOKEN)                                                                    \
-    X(ForwardSlash, '/', BLANK_TOKEN)
-
-#define TOKENS(X)                                          \
-    KEYWORDS(X)                                            \
-    SYMBOLS(X)                                             \
+#define TAU_TOKENS(X)                                      \
+    TAU_KEYWORDS(X)                                        \
+    TAU_SYMBOLS(X)                                         \
                                                            \
     X(Type, "type", size_t index;)                         \
     X(Identifier, "identifier", size_t index;)             \
@@ -74,7 +72,7 @@
     X(CharacterLiteral, "character literal", char value;)  \
     X(IntegerLiteral, "integer literal", uint64_t value;)  \
                                                            \
-    X(Eof, "end of file", BLANK_TOKEN)
+    X(Eof, "end of file", static_assert(true);)
 
 namespace lexer::token {
 template <typename Derived>
@@ -90,20 +88,22 @@ struct Token {
     }
 };
 
-#define AS_STRUCT(Type, Text, ...)                                     \
-    struct Type : public Token<Type> {                                 \
-        __VA_ARGS__                                                    \
-                                                                       \
-        static constexpr auto description() noexcept { return Text; }; \
+#define TAU_TOKENS_AS_STRUCT(type, lexeme, ...)                          \
+    struct type : public Token<type> {                                   \
+        __VA_ARGS__                                                      \
+                                                                         \
+        static constexpr auto description() noexcept { return lexeme; }; \
     };
-TOKENS(AS_STRUCT)
-#undef AS_STRUCT
+
+TAU_TOKENS(TAU_TOKENS_AS_STRUCT)
+
+#undef TAU_TOKENS_AS_STRUCT
 }  // namespace lexer::token
 
 namespace lexer::detail {
-#define AS_TUPLE(Token, ...) lexer::token::Token,
-using TokenTuple = std::tuple<TOKENS(AS_TUPLE) std::monostate>;
-#undef AS_TUPLE
+#define TAU_TOKENS_AS_TUPLE(Token, ...) lexer::token::Token,
+using TokenTuple = std::tuple<TAU_TOKENS(TAU_TOKENS_AS_TUPLE) std::monostate>;
+#undef TAU_TOKENS_AS_TUPLE
 
 template <typename Is, typename Tuple>
 struct TokenBuilder;
@@ -249,16 +249,16 @@ class Keywords {
         const uint32_t identifier_hash = hash(identifier);
 
         switch (identifier_hash) {
-#define AS_SWITCH_CASE(Token, keyword, ...) \
-    case hash(keyword): {                   \
-        if (matches(identifier, keyword)) { \
-            return lexer::token::Token{};   \
-        }                                   \
-        break;                              \
+#define TAU_KEYWORDS_AS_SWITCH_CASE(type, lexeme, ...) \
+    case hash(lexeme): {                               \
+        if (matches(identifier, lexeme)) {             \
+            return lexer::token::type{};               \
+        }                                              \
+        break;                                         \
     }
 
-            KEYWORDS(AS_SWITCH_CASE)
-#undef AS_SWITCH_CASE
+            TAU_KEYWORDS(TAU_KEYWORDS_AS_SWITCH_CASE)
+#undef TAU_KEYWORDS_AS_SWITCH_CASE
             default:
                 break;
         }
@@ -267,11 +267,3 @@ class Keywords {
     }
 };
 }  // namespace lexer
-
-#undef BLANK_TOKEN
-
-#undef KEYWORDS
-#undef PRIMITIVES
-#undef SYMBOLS
-
-#undef TOKENS
