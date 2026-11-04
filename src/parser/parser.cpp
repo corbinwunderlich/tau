@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <memory>
 #include <type_traits>
 #include <utility>
@@ -14,23 +15,25 @@ namespace token = lexer::token;
 using parser::Parser;
 
 auto Parser::next_token() -> lexer::Token {
-    this->pos_++;
-
-    if (this->pos_ >= this->tokens_.size()) {
+    if (pos_ >= tokens_.size()) {
         return lexer::token::Eof{};
     }
 
-    return this->tokens_[this->pos_];
+    lexer::Token token = tokens_[pos_];
+
+    pos_++;
+
+    return token;
 }
 
-auto Parser::peek_token() -> lexer::Token {
-    const size_t index = this->pos_ + 1;
+auto Parser::peek_token(size_t ahead) -> lexer::Token {
+    const size_t index = pos_ + ahead;
 
-    if (index >= this->tokens_.size()) {
+    if (index >= tokens_.size()) {
         return lexer::token::Eof{};
     }
 
-    return this->tokens_[index];
+    return tokens_[index];
 }
 
 auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
@@ -88,8 +91,7 @@ auto node::Factor::parse(Parser& parser) -> Factor {
 
             return parser.peek_token().visit(
                 [&parser, &identifier](token::LeftParen) -> Factor {
-                    return std::make_unique<FunctionCall>(
-                        FunctionCall::parse(parser, identifier));
+                    return FunctionCall::parse(parser, identifier);
                 },
                 [&parser, &identifier](token::Equals) -> Factor {
                     return Assignment::parse(parser, identifier);
@@ -142,7 +144,7 @@ auto node::Term::parse(Parser& parser) -> Term {
 
     const Token operation = parser.next_token();
 
-    auto lhs = std::make_unique<Factor>(std::move(factor));
+    auto lhs = std::move(factor);
     auto rhs = std::make_unique<Term>(Term::parse(parser));
 
     Term term = operation.visit(
@@ -174,7 +176,7 @@ auto node::Expr::parse(Parser& parser) -> Expr {
 
     const Token operation = parser.next_token();
 
-    auto lhs = std::make_unique<Term>(std::move(term));
+    auto lhs = std::move(term);
     auto rhs = std::make_unique<Expr>(Expr::parse(parser));
 
     Expr expression = operation.visit(
@@ -205,6 +207,8 @@ auto node::Block::parse(Parser& parser) -> Block {
 
         statements.push_back(std::move(statement));
     }
+
+    parser.next_token().expect<token::RightBrace>();
 
     return Block{std::move(statements)};
 }
@@ -288,7 +292,7 @@ auto node::Stmt::parse(Parser& parser) -> Stmt {
         [&parser](token::Return) -> Stmt { return Return::parse(parser); },
         [&parser](auto&& arg) -> Stmt {
             try {
-                auto expr = std::make_unique<Expr>(Expr::parse(parser));
+                auto expr = Expr::parse(parser);
 
                 parser.next_token().expect<token::Semicolon>();
 
@@ -309,8 +313,7 @@ auto node::Decl::parse(Parser& parser) -> Decl {
     Decl decl = token.visit(
         [&parser](token::Var) -> Decl { return node::VarDecl::parse(parser); },
         [&parser](token::Fn) -> Decl {
-            return std::make_unique<node::FunctionDecl>(
-                node::FunctionDecl::parse(parser));
+            return node::FunctionDecl::parse(parser);
         },
         [](auto&& arg) -> Decl {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
@@ -323,10 +326,10 @@ auto node::Decl::parse(Parser& parser) -> Decl {
     return decl;
 }
 
-auto Parser::parse() && -> ast::Ast {
+auto Parser::parse() -> ast::Ast {
     std::vector<node::Decl> nodes;
 
-    while (this->pos_ < this->tokens_.size()) {
+    while (pos_ < tokens_.size()) {
         nodes.push_back(node::Decl::parse(*this));
     }
 

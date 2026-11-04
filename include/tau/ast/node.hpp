@@ -34,6 +34,11 @@ class Ident {
 
         return name;
     }
+
+    [[nodiscard]]
+    auto operator==(const Ident& other) const -> bool {
+        return this->index_ == other.index_;
+    };
 };
 
 class Type {
@@ -50,6 +55,11 @@ class Type {
 
         return name;
     }
+
+    [[nodiscard]]
+    auto operator==(const Type& other) const -> bool {
+        return this->index_ == other.index_;
+    };
 };
 
 struct String {
@@ -91,7 +101,7 @@ struct Factor : std::variant<Ident,
                              String,
                              Character,
                              Integer,
-                             std::unique_ptr<FunctionCall>,
+                             FunctionCall,
                              Assignment,
                              Group> {
     using variant::variant;
@@ -100,12 +110,12 @@ struct Factor : std::variant<Ident,
 };
 
 struct Mult {
-    std::unique_ptr<Factor> lhs;
+    Factor lhs;
     std::unique_ptr<Term> rhs;
 };
 
 struct Div {
-    std::unique_ptr<Factor> lhs;
+    Factor lhs;
     std::unique_ptr<Term> rhs;
 };
 
@@ -116,12 +126,12 @@ struct Term : std::variant<Factor, Mult, Div> {
 };
 
 struct Add {
-    std::unique_ptr<Term> lhs;
+    Term lhs;
     std::unique_ptr<Expr> rhs;
 };
 
 struct Sub {
-    std::unique_ptr<Term> lhs;
+    Term lhs;
     std::unique_ptr<Expr> rhs;
 };
 
@@ -153,6 +163,11 @@ struct FunctionDecl {
 
         Param() = default;
         Param(Ident i, Type t) : ident(i), type(t) {};
+
+        [[nodiscard]]
+        auto operator==(const Param& other) const -> bool {
+            return this->ident == other.ident && this->type == other.type;
+        };
     };
 
     std::vector<Param> params;
@@ -170,13 +185,13 @@ struct Return {
     static auto parse(parser::Parser& parser) noexcept(false) -> Return;
 };
 
-struct Stmt : std::variant<std::unique_ptr<Expr>, Block, VarDecl, Return> {
+struct Stmt : std::variant<Expr, Block, VarDecl, Return> {
     using variant::variant;
 
     static auto parse(parser::Parser& parser) noexcept(false) -> Stmt;
 };
 
-struct Decl : std::variant<VarDecl, std::unique_ptr<FunctionDecl>> {
+struct Decl : std::variant<VarDecl, FunctionDecl> {
     using variant::variant;
 
     static auto parse(parser::Parser& parser) noexcept(false) -> Decl;

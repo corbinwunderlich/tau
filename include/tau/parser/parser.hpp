@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <utility>
 
@@ -22,7 +23,7 @@ class Parser {
         : Parser(lexer.lex(), lexer.source(), lexer.pool()) {}
 
     [[nodiscard]]
-    auto parse() && noexcept(false) -> ast::Ast;
+    auto parse() noexcept(false) -> ast::Ast;
 
     friend struct ast::node::FunctionCall;
     friend struct ast::node::Assignment;
@@ -44,6 +45,6 @@ class Parser {
     size_t pos_ = 0;
 
     auto next_token() -> lexer::Token;
-    auto peek_token() -> lexer::Token;
+    auto peek_token(size_t ahead = 0) -> lexer::Token;
 };
 }  // namespace parser
