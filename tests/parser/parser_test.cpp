@@ -1,5 +1,4 @@
 #include <string>
-#include <vector>
 
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_container_properties.hpp>
@@ -28,12 +27,10 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         ast::Ast ast;
 
         REQUIRE_NOTHROW(ast = parser.parse());
-        REQUIRE_THAT(ast.nodes, SizeIs(1));
-
-        node::VarDecl decl;
-
-        REQUIRE_NOTHROW(decl = std::get<node::VarDecl>(ast.nodes[0]));
-        REQUIRE_THAT(std::string(decl.ident.name(*lexer.pool())), Equals("x"));
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}])"));
     }
 
     SECTION("parse function declaration") {
@@ -43,23 +40,9 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         ast::Ast ast;
 
         REQUIRE_NOTHROW(ast = parser.parse());
-        REQUIRE_THAT(ast.nodes, SizeIs(1));
-
-        node::FunctionDecl decl;
-
-        REQUIRE_NOTHROW(
-            decl = std::get<node::FunctionDecl>(std::move(ast.nodes[0])));
-        CHECK_THAT(std::string(decl.ident.name(*lexer.pool())), Equals("add"));
-        REQUIRE_THAT(std::string(decl.return_type.name(*lexer.pool())),
-                     Equals("Return"));
-        REQUIRE_THAT(decl.params, SizeIs(2));
-        CHECK_THAT(std::string(decl.params[0].ident.name(*lexer.pool())),
-                   Equals("first"));
-        CHECK_THAT(std::string(decl.params[0].type.name(*lexer.pool())),
-                   Equals("First"));
-        CHECK_THAT(std::string(decl.params[1].ident.name(*lexer.pool())),
-                   Equals("second"));
-        CHECK_THAT(std::string(decl.params[1].type.name(*lexer.pool())),
-                   Equals("Second"));
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"function_decl":{"ident":{"name":"add"},"params":[{"ident":{"name":"first"},"type":{"name":"First"}},{"ident":{"name":"second"},"type":{"name":"Second"}},"return_type":{"name":"Return"},"body":{"statements":[]}}}])"));
     }
 }

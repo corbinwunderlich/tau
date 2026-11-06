@@ -25,17 +25,17 @@ class Parser {
     [[nodiscard]]
     auto parse() noexcept(false) -> ast::Ast;
 
-    friend struct ast::node::FunctionCall;
-    friend struct ast::node::Assignment;
-    friend struct ast::node::Factor;
-    friend struct ast::node::Term;
-    friend struct ast::node::Expr;
-    friend struct ast::node::Block;
-    friend struct ast::node::VarDecl;
-    friend struct ast::node::FunctionDecl;
-    friend struct ast::node::Return;
-    friend struct ast::node::Stmt;
-    friend struct ast::node::Decl;
+    friend class ast::node::FunctionCall;
+    friend class ast::node::Assignment;
+    friend class ast::node::Factor;
+    friend class ast::node::Term;
+    friend class ast::node::Expr;
+    friend class ast::node::Block;
+    friend class ast::node::VarDecl;
+    friend class ast::node::FunctionDecl;
+    friend class ast::node::Return;
+    friend class ast::node::Stmt;
+    friend class ast::node::Decl;
 
   private:
     lexer::TokenStream tokens_;
