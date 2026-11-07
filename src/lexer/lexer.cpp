@@ -13,6 +13,7 @@
 #include <tau/error/invalid_token.hpp>
 #include <tau/error/unexpected_token.hpp>
 #include <tau/lexer/base.hpp>
+#include <tau/lexer/keyword.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
@@ -149,8 +150,7 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
 
     const std::string_view identifier = source_->range(start, pos_ - start);
 
-    if (const auto keyword = Keywords::lookup(identifier);
-        keyword.has_value()) {
+    if (const auto keyword = keyword::lookup(identifier); keyword.has_value()) {
         return *keyword;
     }
 
