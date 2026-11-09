@@ -235,7 +235,7 @@ auto FunctionDecl::dump(const lexer::Pool& pool,
         }
     }
 
-    stream << R"(,"return_type":)";
+    stream << R"(],"return_type":)";
     this->return_type_.dump(pool, stream);
 
     stream << R"(,"body":)";

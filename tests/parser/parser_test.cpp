@@ -33,7 +33,20 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
                 R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}])"));
     }
 
-    SECTION("parse function declaration") {
+    SECTION("parse function declaration without parameters") {
+        Lexer lexer{"fn main() Void { }"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"function_decl":{"ident":{"name":"main"},"params":[],"return_type":{"name":"Void"},"body":{"statements":[]}}}])"));
+    }
+
+    SECTION("parse function declaration with parameters") {
         Lexer lexer{"fn add(first First, second Second) Return { }"};
         Parser parser{lexer};
 
@@ -43,6 +56,6 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"function_decl":{"ident":{"name":"add"},"params":[{"ident":{"name":"first"},"type":{"name":"First"}},{"ident":{"name":"second"},"type":{"name":"Second"}},"return_type":{"name":"Return"},"body":{"statements":[]}}}])"));
+                R"([{"function_decl":{"ident":{"name":"add"},"params":[{"ident":{"name":"first"},"type":{"name":"First"}},{"ident":{"name":"second"},"type":{"name":"Second"}}],"return_type":{"name":"Return"},"body":{"statements":[]}}}])"));
     }
 }
