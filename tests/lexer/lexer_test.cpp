@@ -22,7 +22,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::StringLiteral>());
-        CHECK(tokens[0].get<token::StringLiteral>().value == "test");
+        CHECK_THAT(std::string(lexer.pool()->resolve_string(
+                       tokens[0].get<token::StringLiteral>().index)),
+                   Equals("test"));
     }
 
     SECTION("lex string literal with escaped double quote") {
@@ -32,7 +34,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::StringLiteral>());
-        CHECK(tokens[0].get<token::StringLiteral>().value == R"(test\")");
+        CHECK_THAT(std::string(lexer.pool()->resolve_string(
+                       tokens[0].get<token::StringLiteral>().index)),
+                   Equals(R"(test\")"));
     }
 
     SECTION("lex empty character literal") {
@@ -128,7 +132,7 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::Identifier>());
-        CHECK_THAT(std::string(lexer.pool()->resolve(
+        CHECK_THAT(std::string(lexer.pool()->resolve_ident(
                        tokens[0].get<token::Identifier>().index)),
                    Equals("testident"));
     }
@@ -149,7 +153,7 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
 
         REQUIRE_THAT(tokens, SizeIs(1));
         REQUIRE_NOTHROW(tokens[0].expect<token::Type>());
-        CHECK_THAT(std::string(lexer.pool()->resolve(
+        CHECK_THAT(std::string(lexer.pool()->resolve_ident(
                        tokens[0].get<token::Type>().index)),
                    Equals("Int"));
     }

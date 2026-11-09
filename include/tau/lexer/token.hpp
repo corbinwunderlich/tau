@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
@@ -57,19 +56,19 @@
     X(Asterisk, '*', static_assert(true);)                                                           \
     X(ForwardSlash, '/', static_assert(true);)
 
-#define TAU_TOKENS(X)                                      \
-    TAU_KEYWORDS(X)                                        \
-    TAU_SYMBOLS(X)                                         \
-                                                           \
-    X(Type, "type", size_t index;)                         \
-    X(Identifier, "identifier", size_t index;)             \
-                                                           \
-    X(Comment, "comment", std::string_view content;)       \
-                                                           \
-    X(StringLiteral, "string literal", std::string value;) \
-    X(CharacterLiteral, "character literal", char value;)  \
-    X(IntegerLiteral, "integer literal", uint64_t value;)  \
-                                                           \
+#define TAU_TOKENS(X)                                     \
+    TAU_KEYWORDS(X)                                       \
+    TAU_SYMBOLS(X)                                        \
+                                                          \
+    X(Type, "type", size_t index;)                        \
+    X(Identifier, "identifier", size_t index;)            \
+                                                          \
+    X(Comment, "comment", std::string_view content;)      \
+                                                          \
+    X(StringLiteral, "string literal", size_t index;)     \
+    X(CharacterLiteral, "character literal", char value;) \
+    X(IntegerLiteral, "integer literal", uint64_t value;) \
+                                                          \
     X(Eof, "end of file", static_assert(true);)
 
 namespace lexer::token {

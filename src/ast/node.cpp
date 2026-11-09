@@ -19,9 +19,9 @@ auto Type::dump(const lexer::Pool& pool,
     stream << R"({"name":")" << this->name(pool) << R"("})";
 }
 
-auto String::dump(const lexer::Pool& /*pool*/,
+auto String::dump(const lexer::Pool& pool,
                   std::stringstream& stream) const noexcept -> void {
-    stream << R"({"value":")" << this->value_ << R"("})";
+    stream << R"({"value":")" << this->value(pool) << R"("})";
 }
 
 auto Character::dump(const Pool& /*pool*/,

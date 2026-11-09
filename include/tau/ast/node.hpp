@@ -1,10 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <sstream>
-#include <string>
 #include <string_view>
 #include <utility>
 #include <variant>
@@ -41,7 +41,7 @@ class Ident : public Node {
 
     [[nodiscard]]
     auto name(const lexer::Pool& pool) const noexcept -> std::string_view {
-        const std::string_view name = pool.resolve(this->index_);
+        const std::string_view name = pool.resolve_ident(this->index_);
 
         return name;
     }
@@ -65,7 +65,7 @@ class Type : public Node {
 
     [[nodiscard]]
     auto name(const lexer::Pool& pool) const noexcept -> std::string_view {
-        const std::string_view name = pool.resolve(this->index_);
+        const std::string_view name = pool.resolve_ident(this->index_);
 
         return name;
     }
@@ -81,10 +81,17 @@ class Type : public Node {
 
 class String : public Node {
   private:
-    std::string value_;
+    size_t index_;
 
   public:
-    String(std::string value) : value_(std::move(value)) {}
+    String(lexer::token::StringLiteral string) : index_(string.index) {}
+
+    [[nodiscard]]
+    auto value(const lexer::Pool& pool) const noexcept -> std::string_view {
+        const std::string& string = pool.resolve_string(this->index_);
+
+        return string;
+    }
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void override;

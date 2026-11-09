@@ -101,7 +101,7 @@ auto node::Factor::parse(Parser& parser) -> Factor {
         [&parser](token::StringLiteral str) -> Factor {
             parser.next_token();
 
-            return String{std::move(str.value)};
+            return String{str};
         },
         [&parser](token::CharacterLiteral character) -> Factor {
             parser.next_token();
@@ -257,7 +257,8 @@ auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
         params.emplace_back(Ident(param_ident), Type(param_type));
 
         if (params.size() > error::TooManyParameters::max_parameters()) {
-            throw error::TooManyParameters(parser.pool_->resolve(ident.index));
+            throw error::TooManyParameters(
+                parser.pool_->resolve_ident(ident.index));
         }
 
         if (is_last_param) {

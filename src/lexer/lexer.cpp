@@ -22,9 +22,7 @@
 using std::nullopt;
 using std::optional;
 
-using lexer::Base;
-using lexer::Lexer;
-
+namespace lexer {
 auto Lexer::lex() -> TokenStream {
     TokenStream token_stream;
 
@@ -133,7 +131,7 @@ inline auto Lexer::read_type() -> Token {
 
     const std::string_view identifier = source_->range(start, pos_ - start);
 
-    const size_t index = this->pool_->insert(identifier);
+    const size_t index = this->pool_->insert_ident(identifier);
 
     return token::Type{{}, index};
 }
@@ -154,7 +152,7 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
         return *keyword;
     }
 
-    const size_t index = this->pool_->insert(identifier);
+    const size_t index = this->pool_->insert_ident(identifier);
 
     return token::Identifier{{}, index};
 }
@@ -468,7 +466,11 @@ auto Lexer::lex_next_token() -> Token {
     if (current == '"') {
         std::string string = this->read_string_literal();
 
-        return token::StringLiteral{{}, std::move(string)};
+        string.shrink_to_fit();
+
+        const size_t index = this->pool_->insert_string(std::move(string));
+
+        return token::StringLiteral{{}, index};
     }
 
     if (current == '\'') {
@@ -479,3 +481,4 @@ auto Lexer::lex_next_token() -> Token {
 
     return this->read_literal_token();
 }
+}  // namespace lexer
