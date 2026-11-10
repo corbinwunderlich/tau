@@ -41,35 +41,26 @@ auto node::FunctionCall::parse(Parser& parser, token::Identifier identifier)
     parser.next_token().expect<token::LeftParen>();
 
     auto params = std::vector<Expr>();
+    bool has_params = parser.peek_token().is_not<token::RightParen>();
 
-    while (true) {
-        const Token token = parser.next_token();
-
-        if (token.is<token::RightParen>()) {
-            break;
-        }
-
+    while (has_params) {
         auto expression = Expr::parse(parser);
-
-        bool is_last_param = parser.next_token().visit(
-            [](token::RightParen) -> bool { return true; },
-            [](token::Comma) -> bool { return false; },
-            [](auto&& arg) -> bool {
-                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-                throw error::UnexpectedToken(token.description(),
-                                             token::RightParen::description(),
-                                             token::Comma::description());
-            });
 
         params.push_back(std::move(expression));
 
-        if (is_last_param) {
+        const auto next_token = parser.next_token();
+        next_token.expect<token::RightParen, token::Comma>();
+
+        if (next_token.is<token::RightParen>()) {
             break;
         }
     }
 
-    params.shrink_to_fit();
+    if (has_params) {
+        params.shrink_to_fit();
+    } else {
+        parser.next_token().expect<token::RightParen>();
+    }
 
     return FunctionCall{Ident(identifier), std::move(params)};
 }
@@ -125,9 +116,7 @@ auto node::Factor::parse(Parser& parser) -> Factor {
         [](auto&& arg) -> Factor {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.description(),
-                                         token::Fn::description(),
-                                         token::Var::description());
+            throw error::UnexpectedToken(token.description(), "expression");
         });
 
     return factor;
@@ -316,12 +305,12 @@ auto node::Decl::parse(Parser& parser) -> Decl {
         [&parser](token::Fn) -> Decl {
             return node::FunctionDecl::parse(parser);
         },
-        [](auto&& arg) -> Decl {
-            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
+        [&parser](auto&&) -> Decl {
+            auto factor = node::Factor::parse(parser);
 
-            throw error::UnexpectedToken(token.description(),
-                                         token::Fn::description(),
-                                         token::Var::description());
+            parser.next_token().expect<token::Semicolon>();
+
+            return factor;
         });
 
     return decl;

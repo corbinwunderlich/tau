@@ -361,7 +361,7 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return>, public Node {
         -> void override;
 };
 
-class Decl : public std::variant<VarDecl, FunctionDecl>, public Node {
+class Decl : public std::variant<VarDecl, FunctionDecl, Factor>, public Node {
   public:
     using variant::variant;
 

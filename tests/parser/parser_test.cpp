@@ -20,6 +20,58 @@ using parser::Parser;
 namespace node = ast::node;
 
 TEST_CASE("Parser correctly constructs AST", "[Parser]") {
+    SECTION("parse function call without parameters") {
+        Lexer lexer{"main();"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"factor":{"function_call":{"ident":{"name":"main"},"params":[]}}}])"));
+    }
+
+    SECTION("parse function call with parameters") {
+        Lexer lexer{"main(1, 2);"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"factor":{"function_call":{"ident":{"name":"main"},"params":[{"term":{"factor":{"integer":{"value":"1"}}}},{"term":{"factor":{"integer":{"value":"2"}}}}]}}}])"));
+    }
+
+    SECTION("parse assignment") {
+        Lexer lexer{"x = 2;"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"factor":{"assignment":{"ident":{"name":"x"},"expr":{"term":{"factor":{"integer":{"value":"2"}}}}}}}])"));
+    }
+
+    SECTION("parse operator precedence") {
+        Lexer lexer{"x = 2 + 2 / 2 - 2 * 2;"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"factor":{"assignment":{"ident":{"name":"x"},"expr":{"add":{"lhs":{"factor":{"integer":{"value":"2"}}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"factor":{"integer":{"value":"2"}}}}},"rhs":{"term":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"factor":{"integer":{"value":"2"}}}}}}}}}}}}}])"));
+    }
+
     SECTION("parse var declaration") {
         Lexer lexer{"var x Int;"};
         Parser parser{lexer};

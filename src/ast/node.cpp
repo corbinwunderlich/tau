@@ -288,6 +288,8 @@ auto Decl::dump(const lexer::Pool& pool,
                 stream << R"("var_decl":)";
             } else if constexpr (std::is_same_v<T, FunctionDecl>) {
                 stream << R"("function_decl":)";
+            } else if constexpr (std::is_same_v<T, Factor>) {
+                stream << R"("factor":)";
             }
 
             static_cast<const Node&>(node).dump(pool, stream);

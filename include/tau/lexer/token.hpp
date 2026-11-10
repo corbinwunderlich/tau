@@ -172,16 +172,17 @@ class Token : public detail::TokenVariant {
         return (!std::holds_alternative<T>(*this) && ...);
     }
 
-    template <typename T>
+    template <typename... T>
     constexpr auto expect() const& noexcept(false) -> void {
-        if (this->is<T>()) {
+        if (this->is<T...>()) {
             return;
         }
 
         this->visit([](auto&& arg) -> void {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
-            throw error::UnexpectedToken(token.description(), T::description());
+            throw error::UnexpectedToken(token.description(),
+                                         (T::description(), ...));
         });
     }
 };
