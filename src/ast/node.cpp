@@ -92,7 +92,7 @@ auto Factor::dump(const lexer::Pool& pool,
                 stream << R"("group":)";
             }
 
-            static_cast<const Node&>(node).dump(pool, stream);
+            static_cast<const Node<T>&>(node).dump(pool, stream);
         },
         *this);
 
@@ -137,7 +137,7 @@ auto Term::dump(const lexer::Pool& pool,
                 stream << R"("div":)";
             }
 
-            static_cast<const Node&>(node).dump(pool, stream);
+            static_cast<const Node<T>&>(node).dump(pool, stream);
         },
         *this);
 
@@ -182,7 +182,7 @@ auto Expr::dump(const lexer::Pool& pool,
                 stream << R"("sub":)";
             }
 
-            static_cast<const Node&>(node).dump(pool, stream);
+            static_cast<const Node<T>&>(node).dump(pool, stream);
         },
         *this);
 
@@ -269,7 +269,7 @@ auto Stmt::dump(const lexer::Pool& pool,
                 stream << R"("return":)";
             }
 
-            static_cast<const Node&>(node).dump(pool, stream);
+            static_cast<const Node<T>&>(node).dump(pool, stream);
         },
         *this);
 
@@ -292,7 +292,7 @@ auto Decl::dump(const lexer::Pool& pool,
                 stream << R"("factor":)";
             }
 
-            static_cast<const Node&>(node).dump(pool, stream);
+            static_cast<const Node<T>&>(node).dump(pool, stream);
         },
         *this);
 

@@ -186,5 +186,4 @@ class Token : public detail::TokenVariant {
         });
     }
 };
-
 }  // namespace lexer

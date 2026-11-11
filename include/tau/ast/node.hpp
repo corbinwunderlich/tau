@@ -19,19 +19,25 @@ class Parser;
 }
 
 namespace ast::node {
+template <typename Derived>
 class Node {
-  public:
-    virtual auto dump(const lexer::Pool& pool,
-                      std::stringstream& stream) const noexcept -> void = 0;
+  private:
+    Node() = default;
 
-    virtual ~Node() = default;
+  public:
+    friend Derived;
+
+    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
+        -> void {
+        return static_cast<const Derived*>(this)->dump(pool, stream);
+    };
 };
 
 class Term;
 class Expr;
 class Stmt;
 
-class Ident : public Node {
+class Ident : public Node<Ident> {
   private:
     size_t index_;
 
@@ -47,7 +53,7 @@ class Ident : public Node {
     }
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 
     [[nodiscard]]
     auto operator==(const Ident& other) const noexcept -> bool {
@@ -55,7 +61,7 @@ class Ident : public Node {
     };
 };
 
-class Type : public Node {
+class Type : public Node<Type> {
   private:
     size_t index_;
 
@@ -71,7 +77,7 @@ class Type : public Node {
     }
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 
     [[nodiscard]]
     auto operator==(const Type& other) const noexcept -> bool {
@@ -79,7 +85,7 @@ class Type : public Node {
     };
 };
 
-class String : public Node {
+class String : public Node<String> {
   private:
     size_t index_;
 
@@ -94,10 +100,10 @@ class String : public Node {
     }
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Character : public Node {
+class Character : public Node<Character> {
   private:
     char value_;
 
@@ -105,10 +111,10 @@ class Character : public Node {
     Character(char value) : value_(value) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Integer : public Node {
+class Integer : public Node<Integer> {
   private:
     uint64_t value_;
 
@@ -116,17 +122,17 @@ class Integer : public Node {
     Integer(uint64_t value) : value_(value) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class FunctionCall : public Node {
+class FunctionCall : public Node<FunctionCall> {
   private:
     Ident ident_;
     std::vector<Expr> params_;
 
   public:
     FunctionCall(Ident ident, std::vector<Expr> params)
-        : ident_(std::move(ident)), params_(std::move(params)) {}
+        : ident_(ident), params_(std::move(params)) {}
 
     [[nodiscard]]
     static auto parse(parser::Parser& parser,
@@ -134,17 +140,17 @@ class FunctionCall : public Node {
         -> FunctionCall;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Assignment : public Node {
+class Assignment : public Node<Assignment> {
   private:
     Ident ident_;
     std::unique_ptr<Expr> expr_;
 
   public:
     Assignment(Ident ident, std::unique_ptr<Expr> expr)
-        : ident_(std::move(ident)), expr_(std::move(expr)) {}
+        : ident_(ident), expr_(std::move(expr)) {}
 
     [[nodiscard]]
     static auto parse(parser::Parser& parser,
@@ -152,10 +158,10 @@ class Assignment : public Node {
         -> Assignment;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Group : public Node {
+class Group : public Node<Group> {
   private:
     std::unique_ptr<Expr> expr_;
 
@@ -163,7 +169,7 @@ class Group : public Node {
     Group(std::unique_ptr<Expr> expr) : expr_(std::move(expr)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
 class Factor : public std::variant<Ident,
@@ -173,7 +179,7 @@ class Factor : public std::variant<Ident,
                                    FunctionCall,
                                    Assignment,
                                    Group>,
-               public Node {
+               public Node<Factor> {
   public:
     using variant::variant;
 
@@ -181,10 +187,10 @@ class Factor : public std::variant<Ident,
     static auto parse(parser::Parser& parser) noexcept(false) -> Factor;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Mult : public Node {
+class Mult : public Node<Mult> {
   private:
     Factor lhs_;
     std::unique_ptr<Term> rhs_;
@@ -194,10 +200,10 @@ class Mult : public Node {
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Div : public Node {
+class Div : public Node<Div> {
   private:
     Factor lhs_;
     std::unique_ptr<Term> rhs_;
@@ -207,20 +213,20 @@ class Div : public Node {
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Term : public std::variant<Factor, Mult, Div>, public Node {
+class Term : public std::variant<Factor, Mult, Div>, public Node<Term> {
   public:
     using variant::variant;
 
     static auto parse(parser::Parser& parser) noexcept(false) -> Term;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Add : public Node {
+class Add : public Node<Add> {
   private:
     Term lhs_;
     std::unique_ptr<Expr> rhs_;
@@ -230,10 +236,10 @@ class Add : public Node {
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Sub : public Node {
+class Sub : public Node<Sub> {
   private:
     Term lhs_;
     std::unique_ptr<Expr> rhs_;
@@ -243,10 +249,10 @@ class Sub : public Node {
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Expr : public std::variant<Term, Add, Sub>, public Node {
+class Expr : public std::variant<Term, Add, Sub>, public Node<Expr> {
   public:
     using variant::variant;
 
@@ -254,10 +260,10 @@ class Expr : public std::variant<Term, Add, Sub>, public Node {
     static auto parse(parser::Parser& parser) noexcept(false) -> Expr;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Block : public Node {
+class Block : public Node<Block> {
   private:
     std::vector<Stmt> statements_;
 
@@ -268,26 +274,25 @@ class Block : public Node {
     static auto parse(parser::Parser& parser) noexcept(false) -> Block;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class VarDecl : public Node {
+class VarDecl : public Node<VarDecl> {
   private:
     Ident ident_;
     Type type_;
 
   public:
-    VarDecl(Ident ident, Type type)
-        : ident_(std::move(ident)), type_(std::move(type)) {}
+    VarDecl(Ident ident, Type type) : ident_(ident), type_(type) {}
 
     [[nodiscard]]
     static auto parse(parser::Parser& parser) noexcept(false) -> VarDecl;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class FunctionDecl : public Node {
+class FunctionDecl : public Node<FunctionDecl> {
   public:
     class Param {
       private:
@@ -296,7 +301,7 @@ class FunctionDecl : public Node {
 
       public:
         Param() = default;
-        Param(Ident i, Type t) : ident_(std::move(i)), type_(std::move(t)) {};
+        Param(Ident i, Type t) : ident_(i), type_(t) {};
 
         [[nodiscard]]
         auto ident() const -> Ident {
@@ -318,16 +323,16 @@ class FunctionDecl : public Node {
                  std::vector<Param> params,
                  Type return_type,
                  Block body)
-        : ident_(std::move(ident)),
+        : ident_(ident),
           params_(std::move(params)),
-          return_type_(std::move(return_type)),
+          return_type_(return_type),
           body_(std::move(body)) {}
 
     [[nodiscard]]
     static auto parse(parser::Parser& parser) noexcept(false) -> FunctionDecl;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 
   private:
     Ident ident_;
@@ -336,7 +341,7 @@ class FunctionDecl : public Node {
     Block body_;
 };
 
-class Return : public Node {
+class Return : public Node<Return> {
   private:
     std::unique_ptr<Expr> expr_;
 
@@ -347,10 +352,11 @@ class Return : public Node {
     static auto parse(parser::Parser& parser) noexcept(false) -> Return;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Stmt : public std::variant<Expr, Block, VarDecl, Return>, public Node {
+class Stmt : public std::variant<Expr, Block, VarDecl, Return>,
+             public Node<Stmt> {
   public:
     using variant::variant;
 
@@ -358,10 +364,11 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return>, public Node {
     static auto parse(parser::Parser& parser) noexcept(false) -> Stmt;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 
-class Decl : public std::variant<VarDecl, FunctionDecl, Factor>, public Node {
+class Decl : public std::variant<VarDecl, FunctionDecl, Factor>,
+             public Node<Decl> {
   public:
     using variant::variant;
 
@@ -369,6 +376,6 @@ class Decl : public std::variant<VarDecl, FunctionDecl, Factor>, public Node {
     static auto parse(parser::Parser& parser) noexcept(false) -> Decl;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void override;
+        -> void;
 };
 }  // namespace ast::node
