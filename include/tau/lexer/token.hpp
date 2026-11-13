@@ -10,7 +10,7 @@
 #include <tau/error/unexpected_token.hpp>
 
 #define TAU_KEYWORDS(X)                                                                              \
-    X(Fn, "fn", static_assert(true);)                                                                \
+    X(Func, "func", static_assert(true);)                                                            \
     X(Return, "return", static_assert(true);)                                                        \
                                                                                                      \
     /*X(Let, ;)*/                                                                                    \

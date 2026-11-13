@@ -214,7 +214,7 @@ auto node::VarDecl::parse(Parser& parser) -> VarDecl {
 }
 
 auto node::FunctionDecl::parse(Parser& parser) -> FunctionDecl {
-    parser.next_token().expect<token::Fn>();
+    parser.next_token().expect<token::Func>();
 
     const auto ident = parser.next_token().get<token::Identifier>();
 
@@ -302,7 +302,7 @@ auto node::Decl::parse(Parser& parser) -> Decl {
 
     Decl decl = token.visit(
         [&parser](token::Var) -> Decl { return node::VarDecl::parse(parser); },
-        [&parser](token::Fn) -> Decl {
+        [&parser](token::Func) -> Decl {
             return node::FunctionDecl::parse(parser);
         },
         [&parser](auto&&) -> Decl {

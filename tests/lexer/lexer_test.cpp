@@ -138,12 +138,12 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     }
 
     SECTION("lex keyword") {
-        Lexer lexer("fn");
+        Lexer lexer("func");
 
         auto tokens = lexer.lex();
 
         REQUIRE_THAT(tokens, SizeIs(1));
-        REQUIRE_NOTHROW(tokens[0].expect<token::Fn>());
+        REQUIRE_NOTHROW(tokens[0].expect<token::Func>());
     }
 
     SECTION("lex type") {

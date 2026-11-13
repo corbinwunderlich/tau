@@ -86,7 +86,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
     }
 
     SECTION("parse function declaration without parameters") {
-        Lexer lexer{"fn main() Void { }"};
+        Lexer lexer{"func main() Void { }"};
         Parser parser{lexer};
 
         ast::Ast ast;
@@ -99,7 +99,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
     }
 
     SECTION("parse function declaration with parameters") {
-        Lexer lexer{"fn add(first First, second Second) Return { }"};
+        Lexer lexer{"func add(first First, second Second) Return { }"};
         Parser parser{lexer};
 
         ast::Ast ast;
