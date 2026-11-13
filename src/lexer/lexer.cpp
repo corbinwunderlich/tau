@@ -163,13 +163,13 @@ inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
     optional<char> current = this->current();
 
     switch (type) {
-        case Lexer::CommentType::SingleLine:
+        case CommentType::SingleLine:
             while (current.has_value() && *current != '\n') {
                 this->advance(current);
             }
 
             break;
-        case Lexer::CommentType::MultiLine:
+        case CommentType::MultiLine:
             while (current.has_value() &&
                    !(current == '*' && this->peek(1) == '/')) {
                 this->advance(current);

@@ -102,7 +102,7 @@ namespace lexer::detail {
 using TokenTuple = std::tuple<TAU_TOKENS(TAU_TOKENS_AS_TUPLE) std::monostate>;
 #undef TAU_TOKENS_AS_TUPLE
 
-template <typename Is, typename Tuple>
+template <typename, typename>
 struct TokenBuilder;
 
 template <typename... Tokens, std::size_t... Is>
