@@ -14,10 +14,6 @@
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
 
-namespace parser {
-class Parser;
-}
-
 namespace ast::node {
 template <typename Derived>
 class Node {
@@ -134,11 +130,6 @@ class FunctionCall : public Node<FunctionCall> {
     FunctionCall(Ident ident, std::vector<Expr> params)
         : ident_(ident), params_(std::move(params)) {}
 
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser,
-                      lexer::token::Identifier identifier) noexcept(false)
-        -> FunctionCall;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
@@ -151,11 +142,6 @@ class Assignment : public Node<Assignment> {
   public:
     Assignment(Ident ident, std::unique_ptr<Expr> expr)
         : ident_(ident), expr_(std::move(expr)) {}
-
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser,
-                      lexer::token::Identifier identifier) noexcept(false)
-        -> Assignment;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -182,9 +168,6 @@ class Factor : public std::variant<Ident,
                public Node<Factor> {
   public:
     using variant::variant;
-
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Factor;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -220,8 +203,6 @@ class Term : public std::variant<Factor, Mult, Div>, public Node<Term> {
   public:
     using variant::variant;
 
-    static auto parse(parser::Parser& parser) noexcept(false) -> Term;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
@@ -256,9 +237,6 @@ class Expr : public std::variant<Term, Add, Sub>, public Node<Expr> {
   public:
     using variant::variant;
 
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Expr;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
@@ -269,9 +247,6 @@ class Block : public Node<Block> {
 
   public:
     Block(std::vector<Stmt> statements) : statements_(std::move(statements)) {}
-
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Block;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -284,9 +259,6 @@ class VarDecl : public Node<VarDecl> {
 
   public:
     VarDecl(Ident ident, Type type) : ident_(ident), type_(type) {}
-
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> VarDecl;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -328,9 +300,6 @@ class FunctionDecl : public Node<FunctionDecl> {
           return_type_(return_type),
           body_(std::move(body)) {}
 
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> FunctionDecl;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 
@@ -348,9 +317,6 @@ class Return : public Node<Return> {
   public:
     Return(std::unique_ptr<Expr> expr) : expr_(std::move(expr)) {}
 
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Return;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
@@ -360,9 +326,6 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return>,
   public:
     using variant::variant;
 
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Stmt;
-
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
@@ -371,9 +334,6 @@ class Decl : public std::variant<VarDecl, FunctionDecl, Factor>,
              public Node<Decl> {
   public:
     using variant::variant;
-
-    [[nodiscard]]
-    static auto parse(parser::Parser& parser) noexcept(false) -> Decl;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
