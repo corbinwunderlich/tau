@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -62,8 +61,6 @@
                                                           \
     X(Type, "type", size_t index;)                        \
     X(Identifier, "identifier", size_t index;)            \
-                                                          \
-    X(Comment, "comment", std::string_view content;)      \
                                                           \
     X(StringLiteral, "string literal", size_t index;)     \
     X(CharacterLiteral, "character literal", char value;) \

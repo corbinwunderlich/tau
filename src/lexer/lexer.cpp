@@ -64,12 +64,27 @@ auto Lexer::peek(size_t ahead) const -> optional<char> {
     return source_->at(index);
 }
 
-inline void Lexer::skip_whitespace() {
+inline void Lexer::skip_whitespace_and_comments() {
     optional<char> current = this->current();
 
-    while (current.has_value() &&
-           std::isspace(static_cast<unsigned char>(*current)) != 0) {
-        this->advance(current);
+    while (true) {
+        if (!current.has_value()) {
+            return;
+        }
+
+        if (std::isspace(static_cast<unsigned char>(*current)) != 0) {
+            this->advance(current);
+
+            continue;
+        }
+
+        if (*current != '#') {
+            return;
+        }
+
+        while (current.has_value() && *current != '\n') {
+            this->advance(current);
+        }
     }
 }
 
@@ -155,34 +170,6 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
     const size_t index = this->pool_->insert_ident(identifier);
 
     return token::Identifier{{}, index};
-}
-
-inline auto Lexer::read_comment(Lexer::CommentType type) -> Token {
-    const size_t start = pos_;
-
-    optional<char> current = this->current();
-
-    switch (type) {
-        case CommentType::SingleLine:
-            while (current.has_value() && *current != '\n') {
-                this->advance(current);
-            }
-
-            break;
-        case CommentType::MultiLine:
-            while (current.has_value() &&
-                   !(current == '*' && this->peek(1) == '/')) {
-                this->advance(current);
-            }
-
-            this->advance(2);
-
-            break;
-    }
-
-    const auto comment = source_->range(start, pos_ - start);
-
-    return token::Comment{{}, comment};
 }
 
 inline auto Lexer::read_string_literal() -> std::string {
@@ -332,7 +319,7 @@ inline auto Lexer::read_literal_token() -> Token {
         return token::Eof{};
     }
 
-    const optional<char> peek = this->peek(1);
+    // const optional<char> peek = this->peek(1);
 
     switch (*current) {
         case token::Semicolon::description():
@@ -422,14 +409,6 @@ inline auto Lexer::read_literal_token() -> Token {
             this->advance();
             return token::Asterisk{};
         case token::ForwardSlash::description():
-            if (peek == '/') {
-                return this->read_comment(CommentType::SingleLine);
-            }
-
-            if (peek == '*') {
-                return this->read_comment(CommentType::MultiLine);
-            }
-
             this->advance();
             return token::ForwardSlash{};
         default:
@@ -438,7 +417,7 @@ inline auto Lexer::read_literal_token() -> Token {
 }
 
 auto Lexer::lex_next_token() -> Token {
-    this->skip_whitespace();
+    this->skip_whitespace_and_comments();
 
     optional<char> peek = this->peek();
 

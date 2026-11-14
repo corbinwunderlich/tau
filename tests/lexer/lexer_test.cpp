@@ -159,12 +159,12 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
     }
 
     SECTION("lex literal token") {
-        Lexer lexer("+");
+        Lexer lexer("/");
 
         auto tokens = lexer.lex();
 
         REQUIRE_THAT(tokens, SizeIs(1));
-        REQUIRE_NOTHROW(tokens[0].expect<token::Plus>());
+        REQUIRE_NOTHROW(tokens[0].expect<token::ForwardSlash>());
     }
 
     SECTION("lex single equals") {
@@ -176,32 +176,23 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         REQUIRE_NOTHROW(tokens[0].expect<token::Equals>());
     }
 
-    SECTION("lex single-line comment") {
-        Lexer lexer("// this is first comment\n// this is second comment");
-
-        auto tokens = lexer.lex();
-
-        REQUIRE_THAT(tokens, SizeIs(2));
-
-        REQUIRE_NOTHROW(tokens[0].expect<token::Comment>());
-        CHECK_THAT(std::string(tokens[0].get<token::Comment>().content),
-                   Equals("// this is first comment"));
-
-        REQUIRE_NOTHROW(tokens[1].expect<token::Comment>());
-        CHECK_THAT(std::string(tokens[1].get<token::Comment>().content),
-                   Equals("// this is second comment"));
-    }
-
-    SECTION("lex multi-line comment") {
-        Lexer lexer("/* this is the first line\nand this is the second */");
+    SECTION("lexer skips whitespace") {
+        Lexer lexer("    ");
 
         auto tokens = lexer.lex();
 
         REQUIRE_THAT(tokens, SizeIs(1));
-        REQUIRE_NOTHROW(tokens[0].expect<token::Comment>());
-        CHECK_THAT(
-            std::string(tokens[0].get<token::Comment>().content),
-            Equals("/* this is the first line\nand this is the second */"));
+        REQUIRE_NOTHROW(tokens[0].expect<token::Eof>());
+    }
+
+    SECTION("lexer skips single-line comment") {
+        Lexer lexer(R"(# this is first comment
+                       # this is second comment)");
+
+        auto tokens = lexer.lex();
+
+        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_NOTHROW(tokens[0].expect<token::Eof>());
     }
 }
 }  // namespace lexer

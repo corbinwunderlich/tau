@@ -35,8 +35,6 @@ class Lexer {
     auto pool() const noexcept -> std::shared_ptr<lexer::Pool>;
 
   private:
-    enum class CommentType : uint8_t { SingleLine, MultiLine };
-
     std::shared_ptr<source::Source> source_;
     std::shared_ptr<lexer::Pool> pool_ =
         std::make_shared<lexer::Pool>(lexer::Pool{});
@@ -52,13 +50,12 @@ class Lexer {
     [[nodiscard]]
     auto peek(size_t ahead = 0) const -> std::optional<char>;
 
-    void skip_whitespace();
+    void skip_whitespace_and_comments();
 
     auto escape_character(char character) noexcept(false) -> char;
 
     auto read_type() -> Token;
     auto read_identifier_or_keyword() -> Token;
-    auto read_comment(CommentType type) -> Token;
     auto read_string_literal() noexcept(false) -> std::string;
     auto read_character_literal() noexcept(false) -> char;
     auto read_integer_literal() noexcept(false) -> uint64_t;
