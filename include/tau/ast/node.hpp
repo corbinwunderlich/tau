@@ -29,7 +29,6 @@ class Node {
     };
 };
 
-class Term;
 class Expr;
 class Stmt;
 
@@ -81,12 +80,12 @@ class Type : public Node<Type> {
     };
 };
 
-class String : public Node<String> {
+class StringLiteral : public Node<StringLiteral> {
   private:
     size_t index_;
 
   public:
-    String(lexer::token::StringLiteral string) : index_(string.index) {}
+    StringLiteral(lexer::token::StringLiteral string) : index_(string.index) {}
 
     [[nodiscard]]
     auto value(const lexer::Pool& pool) const noexcept -> std::string_view {
@@ -99,23 +98,23 @@ class String : public Node<String> {
         -> void;
 };
 
-class Character : public Node<Character> {
+class CharacterLiteral : public Node<CharacterLiteral> {
   private:
     char value_;
 
   public:
-    Character(char value) : value_(value) {}
+    CharacterLiteral(char value) : value_(value) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
 
-class Integer : public Node<Integer> {
+class IntegerLiteral : public Node<IntegerLiteral> {
   private:
     uint64_t value_;
 
   public:
-    Integer(uint64_t value) : value_(value) {}
+    IntegerLiteral(uint64_t value) : value_(value) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -158,28 +157,13 @@ class Group : public Node<Group> {
         -> void;
 };
 
-class Factor : public std::variant<Ident,
-                                   String,
-                                   Character,
-                                   Integer,
-                                   FunctionCall,
-                                   Assignment,
-                                   Group>,
-               public Node<Factor> {
-  public:
-    using variant::variant;
-
-    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void;
-};
-
 class Mult : public Node<Mult> {
   private:
-    Factor lhs_;
-    std::unique_ptr<Term> rhs_;
+    std::unique_ptr<Expr> lhs_;
+    std::unique_ptr<Expr> rhs_;
 
   public:
-    Mult(Factor lhs, std::unique_ptr<Term> rhs)
+    Mult(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
@@ -188,20 +172,12 @@ class Mult : public Node<Mult> {
 
 class Div : public Node<Div> {
   private:
-    Factor lhs_;
-    std::unique_ptr<Term> rhs_;
+    std::unique_ptr<Expr> lhs_;
+    std::unique_ptr<Expr> rhs_;
 
   public:
-    Div(Factor lhs, std::unique_ptr<Term> rhs)
+    Div(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
-
-    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void;
-};
-
-class Term : public std::variant<Factor, Mult, Div>, public Node<Term> {
-  public:
-    using variant::variant;
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
@@ -209,11 +185,11 @@ class Term : public std::variant<Factor, Mult, Div>, public Node<Term> {
 
 class Add : public Node<Add> {
   private:
-    Term lhs_;
+    std::unique_ptr<Expr> lhs_;
     std::unique_ptr<Expr> rhs_;
 
   public:
-    Add(Term lhs, std::unique_ptr<Expr> rhs)
+    Add(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
@@ -222,18 +198,29 @@ class Add : public Node<Add> {
 
 class Sub : public Node<Sub> {
   private:
-    Term lhs_;
+    std::unique_ptr<Expr> lhs_;
     std::unique_ptr<Expr> rhs_;
 
   public:
-    Sub(Term lhs, std::unique_ptr<Expr> rhs)
+    Sub(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
         : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;
 };
 
-class Expr : public std::variant<Term, Add, Sub>, public Node<Expr> {
+class Expr : public std::variant<Ident,
+                                 StringLiteral,
+                                 CharacterLiteral,
+                                 IntegerLiteral,
+                                 FunctionCall,
+                                 Assignment,
+                                 Group,
+                                 Mult,
+                                 Div,
+                                 Add,
+                                 Sub>,
+             public Node<Expr> {
   public:
     using variant::variant;
 
@@ -330,7 +317,7 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return>,
         -> void;
 };
 
-class Decl : public std::variant<VarDecl, FunctionDecl, Factor>,
+class Decl : public std::variant<VarDecl, FunctionDecl, Expr>,
              public Node<Decl> {
   public:
     using variant::variant;

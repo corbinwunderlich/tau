@@ -44,10 +44,10 @@ class Parser {
         -> ast::node::Assignment;
 
     [[nodiscard]]
-    auto parse_factor() -> ast::node::Factor;
+    auto parse_factor() -> ast::node::Expr;
 
     [[nodiscard]]
-    auto parse_term() -> ast::node::Term;
+    auto parse_term() -> ast::node::Expr;
 
     [[nodiscard]]
     auto parse_expr() -> ast::node::Expr;

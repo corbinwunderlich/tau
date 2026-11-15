@@ -73,40 +73,40 @@ auto Parser::parse_assignment(token::Identifier identifier)
                             std::make_unique<node::Expr>(this->parse_expr())};
 }
 
-auto Parser::parse_factor() -> node::Factor {
+auto Parser::parse_factor() -> node::Expr {
     const Token token = this->peek_token();
 
-    node::Factor factor = token.visit(
-        [this](token::Identifier identifier) -> node::Factor {
+    node::Expr factor = token.visit(
+        [this](token::Identifier identifier) -> node::Expr {
             this->next_token();
 
             return this->peek_token().visit(
-                [this, &identifier](token::LeftParen) -> node::Factor {
+                [this, &identifier](token::LeftParen) -> node::Expr {
                     return this->parse_function_call(identifier);
                 },
-                [this, &identifier](token::Equals) -> node::Factor {
+                [this, &identifier](token::Equals) -> node::Expr {
                     return this->parse_assignment(identifier);
                 },
-                [&identifier](auto&&) -> node::Factor {
+                [&identifier](auto&&) -> node::Expr {
                     return node::Ident(identifier);
                 });
         },
-        [this](token::StringLiteral str) -> node::Factor {
+        [this](token::StringLiteral str) -> node::Expr {
             this->next_token();
 
-            return node::String{str};
+            return node::StringLiteral{str};
         },
-        [this](token::CharacterLiteral character) -> node::Factor {
+        [this](token::CharacterLiteral character) -> node::Expr {
             this->next_token();
 
-            return node::Character{character.value};
+            return node::CharacterLiteral{character.value};
         },
-        [this](token::IntegerLiteral integer) -> node::Factor {
+        [this](token::IntegerLiteral integer) -> node::Expr {
             this->next_token();
 
-            return node::Integer{integer.value};
+            return node::IntegerLiteral{integer.value};
         },
-        [this](token::LeftParen) -> node::Factor {
+        [this](token::LeftParen) -> node::Expr {
             this->next_token();
 
             auto expression = std::make_unique<node::Expr>(this->parse_expr());
@@ -115,7 +115,7 @@ auto Parser::parse_factor() -> node::Factor {
 
             return node::Group{std::move(expression)};
         },
-        [](auto&& arg) -> node::Factor {
+        [](auto&& arg) -> node::Expr {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.description(), "expression");
@@ -124,8 +124,8 @@ auto Parser::parse_factor() -> node::Factor {
     return factor;
 }
 
-auto Parser::parse_term() -> node::Term {
-    node::Factor factor = this->parse_factor();
+auto Parser::parse_term() -> node::Expr {
+    node::Expr factor = this->parse_factor();
 
     const Token token = this->peek_token();
 
@@ -135,17 +135,17 @@ auto Parser::parse_term() -> node::Term {
 
     const Token operation = this->next_token();
 
-    node::Factor lhs = std::move(factor);
-    auto rhs = std::make_unique<node::Term>(this->parse_term());
+    auto lhs = std::make_unique<node::Expr>(std::move(factor));
+    auto rhs = std::make_unique<node::Expr>(this->parse_term());
 
-    node::Term term = operation.visit(
-        [&lhs, &rhs](token::Asterisk) -> node::Term {
+    node::Expr term = operation.visit(
+        [&lhs, &rhs](token::Asterisk) -> node::Expr {
             return node::Mult{std::move(lhs), std::move(rhs)};
         },
-        [&lhs, &rhs](token::ForwardSlash) -> node::Term {
+        [&lhs, &rhs](token::ForwardSlash) -> node::Expr {
             return node::Div{std::move(lhs), std::move(rhs)};
         },
-        [](auto&& arg) -> node::Term {
+        [](auto&& arg) -> node::Expr {
             const token::Token<std::decay_t<decltype(arg)>>& token = arg;
 
             throw error::UnexpectedToken(token.description(),
@@ -157,7 +157,7 @@ auto Parser::parse_term() -> node::Term {
 }
 
 auto Parser::parse_expr() -> node::Expr {
-    node::Term term = this->parse_term();
+    node::Expr term = this->parse_term();
 
     const Token token = this->peek_token();
 
@@ -167,7 +167,7 @@ auto Parser::parse_expr() -> node::Expr {
 
     const Token operation = this->next_token();
 
-    node::Term lhs = std::move(term);
+    auto lhs = std::make_unique<node::Expr>(std::move(term));
     auto rhs = std::make_unique<node::Expr>(this->parse_expr());
 
     node::Expr expression = operation.visit(
@@ -308,7 +308,7 @@ auto Parser::parse_decl() -> node::Decl {
             return this->parse_function_decl();
         },
         [this](auto&&) -> node::Decl {
-            node::Factor factor = this->parse_factor();
+            node::Expr factor = this->parse_factor();
 
             this->next_token().expect<token::Semicolon>();
 

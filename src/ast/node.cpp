@@ -19,18 +19,18 @@ auto Type::dump(const lexer::Pool& pool,
     stream << R"({"name":")" << this->name(pool) << R"("})";
 }
 
-auto String::dump(const lexer::Pool& pool,
-                  std::stringstream& stream) const noexcept -> void {
+auto StringLiteral::dump(const lexer::Pool& pool,
+                         std::stringstream& stream) const noexcept -> void {
     stream << R"({"value":")" << this->value(pool) << R"("})";
 }
 
-auto Character::dump(const Pool& /*pool*/,
-                     std::stringstream& stream) const noexcept -> void {
+auto CharacterLiteral::dump(const Pool& /*pool*/,
+                            std::stringstream& stream) const noexcept -> void {
     stream << R"({"value":")" << this->value_ << R"("})";
 }
 
-auto Integer::dump(const Pool& /*pool*/,
-                   std::stringstream& stream) const noexcept -> void {
+auto IntegerLiteral::dump(const Pool& /*pool*/,
+                          std::stringstream& stream) const noexcept -> void {
     stream << R"({"value":")" << this->value_ << R"("})";
 }
 
@@ -68,41 +68,10 @@ auto Group::dump(const lexer::Pool& pool,
     stream << '}';
 }
 
-auto Factor::dump(const lexer::Pool& pool,
-                  std::stringstream& stream) const noexcept -> void {
-    stream << '{';
-
-    std::visit(
-        [&pool, &stream](auto&& node) -> void {
-            using T = std::decay_t<decltype(node)>;
-
-            if constexpr (std::is_same_v<T, Ident>) {
-                stream << R"("ident":)";
-            } else if constexpr (std::is_same_v<T, String>) {
-                stream << R"("string":)";
-            } else if constexpr (std::is_same_v<T, Character>) {
-                stream << R"("character":)";
-            } else if constexpr (std::is_same_v<T, Integer>) {
-                stream << R"("integer":)";
-            } else if constexpr (std::is_same_v<T, FunctionCall>) {
-                stream << R"("function_call":)";
-            } else if constexpr (std::is_same_v<T, Assignment>) {
-                stream << R"("assignment":)";
-            } else if constexpr (std::is_same_v<T, Group>) {
-                stream << R"("group":)";
-            }
-
-            static_cast<const Node<T>&>(node).dump(pool, stream);
-        },
-        *this);
-
-    stream << '}';
-}
-
 auto Mult::dump(const lexer::Pool& pool,
                 std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_.dump(pool, stream);
+    this->lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
     this->rhs_->dump(pool, stream);
@@ -113,7 +82,7 @@ auto Mult::dump(const lexer::Pool& pool,
 auto Div::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_.dump(pool, stream);
+    this->lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
     this->rhs_->dump(pool, stream);
@@ -121,33 +90,10 @@ auto Div::dump(const lexer::Pool& pool,
     stream << '}';
 }
 
-auto Term::dump(const lexer::Pool& pool,
-                std::stringstream& stream) const noexcept -> void {
-    stream << '{';
-
-    std::visit(
-        [&pool, &stream](auto&& node) -> void {
-            using T = std::decay_t<decltype(node)>;
-
-            if constexpr (std::is_same_v<T, Factor>) {
-                stream << R"("factor":)";
-            } else if constexpr (std::is_same_v<T, Mult>) {
-                stream << R"("mult":)";
-            } else if constexpr (std::is_same_v<T, Div>) {
-                stream << R"("div":)";
-            }
-
-            static_cast<const Node<T>&>(node).dump(pool, stream);
-        },
-        *this);
-
-    stream << '}';
-}
-
 auto Add::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_.dump(pool, stream);
+    this->lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
     this->rhs_->dump(pool, stream);
@@ -158,7 +104,7 @@ auto Add::dump(const lexer::Pool& pool,
 auto Sub::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_.dump(pool, stream);
+    this->lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
     this->rhs_->dump(pool, stream);
@@ -174,8 +120,24 @@ auto Expr::dump(const lexer::Pool& pool,
         [&pool, &stream](auto&& node) -> void {
             using T = std::decay_t<decltype(node)>;
 
-            if constexpr (std::is_same_v<T, Term>) {
-                stream << R"("term":)";
+            if constexpr (std::is_same_v<T, Ident>) {
+                stream << R"("ident":)";
+            } else if constexpr (std::is_same_v<T, StringLiteral>) {
+                stream << R"("string":)";
+            } else if constexpr (std::is_same_v<T, CharacterLiteral>) {
+                stream << R"("character":)";
+            } else if constexpr (std::is_same_v<T, IntegerLiteral>) {
+                stream << R"("integer":)";
+            } else if constexpr (std::is_same_v<T, FunctionCall>) {
+                stream << R"("function_call":)";
+            } else if constexpr (std::is_same_v<T, Assignment>) {
+                stream << R"("assignment":)";
+            } else if constexpr (std::is_same_v<T, Group>) {
+                stream << R"("group":)";
+            } else if constexpr (std::is_same_v<T, Mult>) {
+                stream << R"("mult":)";
+            } else if constexpr (std::is_same_v<T, Div>) {
+                stream << R"("div":)";
             } else if constexpr (std::is_same_v<T, Add>) {
                 stream << R"("add":)";
             } else if constexpr (std::is_same_v<T, Sub>) {
@@ -288,8 +250,8 @@ auto Decl::dump(const lexer::Pool& pool,
                 stream << R"("var_decl":)";
             } else if constexpr (std::is_same_v<T, FunctionDecl>) {
                 stream << R"("function_decl":)";
-            } else if constexpr (std::is_same_v<T, Factor>) {
-                stream << R"("factor":)";
+            } else if constexpr (std::is_same_v<T, Expr>) {
+                stream << R"("expr":)";
             }
 
             static_cast<const Node<T>&>(node).dump(pool, stream);
