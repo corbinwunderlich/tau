@@ -6,19 +6,22 @@
 
 namespace source {
 class Source {
+  private:
+    std::string text_;
+
   public:
-    [[nodiscard]]
-    virtual auto length() const -> size_t = 0;
+    Source(std::string text);
 
     [[nodiscard]]
-    virtual auto data() const -> const char* = 0;
+    auto length() const noexcept -> size_t;
 
     [[nodiscard]]
-    virtual auto at(size_t index) const -> std::optional<char> = 0;
+    auto data() const noexcept -> const char*;
 
     [[nodiscard]]
-    virtual auto range(size_t start, size_t end) const -> std::string_view = 0;
+    auto at(size_t index) const noexcept -> std::optional<char>;
 
-    virtual ~Source() = default;
+    [[nodiscard]]
+    auto range(size_t start, size_t end) const noexcept -> std::string_view;
 };
 }  // namespace source

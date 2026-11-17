@@ -8,7 +8,6 @@
 #include <vector>
 
 #include <tau/lexer/pool.hpp>
-#include <tau/source/file_source.hpp>
 #include <tau/source/source.hpp>
 
 #include "token.hpp"
@@ -22,8 +21,8 @@ class Lexer {
         : source_(std::move(source)) {}
 
     Lexer(std::string source)
-        : Lexer(std::make_shared<source::FileSource>(
-              source::FileSource(std::move(source)))) {}
+        : Lexer(std::make_shared<source::Source>(
+              source::Source(std::move(source)))) {}
 
     [[nodiscard]]
     auto lex() noexcept(false) -> TokenStream;
