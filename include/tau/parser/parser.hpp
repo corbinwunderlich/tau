@@ -8,29 +8,38 @@
 #include <tau/ast/node.hpp>
 #include <tau/lexer/lexer.hpp>
 #include <tau/lexer/pool.hpp>
-#include <tau/source/source.hpp>
+#include <tau/source/map.hpp>
+#include <tau/source/pos.hpp>
 
 namespace parser {
 class Parser {
   public:
     Parser(lexer::TokenStream tokens,
-           std::shared_ptr<source::Source> source,
-           std::shared_ptr<lexer::Pool> pool)
+           std::shared_ptr<source::Map> source_map,
+           std::shared_ptr<lexer::Pool> pool,
+           source::Id source_id)
         : tokens_(std::move(tokens)),
-          source_(std::move(source)),
-          pool_(std::move(pool)) {}
+          source_map_(std::move(source_map)),
+          pool_(std::move(pool)),
+          source_id_(source_id) {}
     Parser(lexer::Lexer lexer)
-        : Parser(lexer.lex(), lexer.source(), lexer.pool()) {}
+        : Parser(lexer.lex(),
+                 lexer.source_map(),
+                 lexer.pool(),
+                 lexer.source_id()) {}
 
     [[nodiscard]]
     auto parse() noexcept(false) -> ast::Ast;
 
   private:
     lexer::TokenStream tokens_;
-    std::shared_ptr<source::Source> source_;
+    std::shared_ptr<source::Map> source_map_;
     std::shared_ptr<lexer::Pool> pool_;
 
+    source::Id source_id_;
     size_t pos_ = 0;
+
+    const source::Entry& source_entry_ = source_map_->get(source_id_);
 
     auto next_token() -> lexer::Token;
     auto peek_token(size_t ahead = 0) -> lexer::Token;
