@@ -4,8 +4,10 @@
 #include <string_view>
 
 #include <tau/lexer/token.hpp>
+#include <tau/source/span.hpp>
 
 namespace lexer::keyword {
 [[nodiscard]]
-auto lookup(std::string_view identifier) -> std::optional<Token>;
+auto lookup(source::Span span, std::string_view identifier)
+    -> std::optional<Token>;
 }  // namespace lexer::keyword

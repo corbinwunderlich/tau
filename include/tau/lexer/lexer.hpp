@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -63,9 +62,9 @@ class Lexer {
 
     auto read_type() -> Token;
     auto read_identifier_or_keyword() -> Token;
-    auto read_string_literal() noexcept(false) -> std::string;
-    auto read_character_literal() noexcept(false) -> char;
-    auto read_integer_literal() noexcept(false) -> uint64_t;
+    auto read_string_literal() noexcept(false) -> Token;
+    auto read_character_literal() noexcept(false) -> Token;
+    auto read_integer_literal() noexcept(false) -> Token;
     auto read_literal_token() -> Token;
 
     auto lex_next_token() -> Token;

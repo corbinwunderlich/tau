@@ -18,6 +18,7 @@
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
 #include <tau/source/map.hpp>
+#include <tau/source/span.hpp>
 
 using std::nullopt;
 using std::optional;
@@ -63,9 +64,9 @@ auto Lexer::current() const -> optional<char> {
 }
 
 auto Lexer::peek(size_t ahead) const -> optional<char> {
-    const size_t offset = pos_.offset() + ahead;
+    const source::Pos pos = pos_ + ahead;
 
-    return source_entry_.at(offset);
+    return source_entry_.at(pos);
 }
 
 inline void Lexer::skip_whitespace_and_comments() {
@@ -154,7 +155,7 @@ inline auto Lexer::read_type() -> Token {
 
     const size_t index = this->pool_->insert_ident(identifier);
 
-    return token::Type{{}, index};
+    return token::Type{{}, source::Span{start, pos_ - 1}, index};
 }
 
 inline auto Lexer::read_identifier_or_keyword() -> Token {
@@ -170,16 +171,19 @@ inline auto Lexer::read_identifier_or_keyword() -> Token {
     const std::string_view identifier =
         source_entry_.range(start, pos_.offset() - start.offset());
 
-    if (const auto keyword = keyword::lookup(identifier); keyword.has_value()) {
+    const source::Span span{start, pos_ - 1};
+
+    if (const auto keyword = keyword::lookup(span, identifier);
+        keyword.has_value()) {
         return *keyword;
     }
 
     const size_t index = this->pool_->insert_ident(identifier);
 
-    return token::Identifier{{}, index};
+    return token::Identifier{{}, span, index};
 }
 
-inline auto Lexer::read_string_literal() -> std::string {
+inline auto Lexer::read_string_literal() -> Token {
     this->advance();
 
     const source::Pos start = pos_;
@@ -199,11 +203,17 @@ inline auto Lexer::read_string_literal() -> std::string {
 
     this->advance();
 
-    return std::string(
+    const auto string = std::string(
         source_entry_.range(start, pos_.offset() - start.offset() - 1));
+
+    const size_t index = this->pool_->insert_string(string);
+
+    return token::StringLiteral{{}, source::Span{start - 1, pos_ - 1}, index};
 }
 
-inline auto Lexer::read_character_literal() -> char {
+inline auto Lexer::read_character_literal() -> Token {
+    const source::Pos start = pos_;
+
     this->advance();
 
     optional<char> current = this->current();
@@ -215,18 +225,20 @@ inline auto Lexer::read_character_literal() -> char {
     if (*current != '\\') {
         this->advance();
 
-        if (optional<char> next_char = this->current();
-            !next_char.has_value() || *next_char != '\'') {
-            if (!next_char.has_value()) {
-                throw error::UnexpectedToken(token::Eof::description(), '\'');
-            }
+        optional<char> next_char = this->current();
 
+        if (!next_char.has_value()) {
+            throw error::UnexpectedToken(token::Eof::description(), '\'');
+        }
+
+        if (*next_char != '\'') {
             throw error::UnexpectedToken(*next_char, '\'');
         }
 
         this->advance();
 
-        return *current;
+        return token::CharacterLiteral{
+            {}, source::Span{start, pos_ - 1}, *current};
     }
 
     this->advance(current);
@@ -239,20 +251,23 @@ inline auto Lexer::read_character_literal() -> char {
 
     this->advance(2);
 
-    return character;
+    return token::CharacterLiteral{
+        {}, source::Span{start, pos_ - 1}, character};
 }
 
-inline auto Lexer::read_integer_literal() -> uint64_t {
+inline auto Lexer::read_integer_literal() -> Token {
     optional<char> current = this->current();
 
-    source::Pos start = pos_;
+    const source::Pos start = pos_;
+
+    source::Pos digits_start = pos_;
     Base base = Base::Decimal;
 
     if (*current == '0') {
         const optional<char> peek = this->peek(1);
 
         if (!peek.has_value()) {
-            return 0;
+            return token::IntegerLiteral{{}, source::Span{pos_, pos_}, 0};
         }
 
         switch (*peek) {
@@ -271,7 +286,7 @@ inline auto Lexer::read_integer_literal() -> uint64_t {
 
         this->advance(current, 2);
 
-        start = pos_;
+        digits_start = pos_;
     }
 
     while (current.has_value()) {
@@ -310,7 +325,7 @@ inline auto Lexer::read_integer_literal() -> uint64_t {
     uint64_t number;
 
     const auto [_, ec] =
-        std::from_chars(source_entry_.text().data() + start.offset(),
+        std::from_chars(source_entry_.text().data() + digits_start.offset(),
                         source_entry_.text().data() + pos_.offset(), number,
                         static_cast<uint8_t>(base));
 
@@ -318,14 +333,14 @@ inline auto Lexer::read_integer_literal() -> uint64_t {
         throw error::BadIntegerLiteral(base);
     }
 
-    return number;
+    return token::IntegerLiteral{{}, source::Span{start, pos_ - 1}, number};
 }
 
 inline auto Lexer::read_literal_token() -> Token {
     const optional<char> current = this->current();
 
     if (!current.has_value()) {
-        return token::Eof{};
+        return token::Eof{{}, source::Span{pos_}};
     }
 
     // const optional<char> peek = this->peek(1);
@@ -333,31 +348,31 @@ inline auto Lexer::read_literal_token() -> Token {
     switch (*current) {
         case token::Semicolon::description():
             this->advance();
-            return token::Semicolon{};
+            return token::Semicolon{{}, source::Span{pos_ - 1}};
         case token::Comma::description():
             this->advance();
-            return token::Comma{};
+            return token::Comma{{}, source::Span{pos_ - 1}};
         case token::LeftParen::description():
             this->advance();
-            return token::LeftParen{};
+            return token::LeftParen{{}, source::Span{pos_ - 1}};
         case token::RightParen::description():
             this->advance();
-            return token::RightParen{};
+            return token::RightParen{{}, source::Span{pos_ - 1}};
         case token::LeftBrace::description():
             this->advance();
-            return token::LeftBrace{};
+            return token::LeftBrace{{}, source::Span{pos_ - 1}};
         case token::RightBrace::description():
             this->advance();
-            return token::RightBrace{};
+            return token::RightBrace{{}, source::Span{pos_ - 1}};
         case token::LeftBracket::description():
             this->advance();
-            return token::LeftBracket{};
+            return token::LeftBracket{{}, source::Span{pos_ - 1}};
         case token::RightBracket::description():
             this->advance();
-            return token::RightBracket{};
+            return token::RightBracket{{}, source::Span{pos_ - 1}};
         case token::Equals::description():
             this->advance();
-            return token::Equals{};
+            return token::Equals{{}, source::Span{pos_ - 1}};
             // if (peek != '=') {
             //     this->advance();
             //     return token::Equals{};
@@ -410,16 +425,16 @@ inline auto Lexer::read_literal_token() -> Token {
         //     return token::Xor{};
         case token::Plus::description():
             this->advance();
-            return token::Plus{};
+            return token::Plus{{}, source::Span{pos_ - 1}};
         case token::Minus::description():
             this->advance();
-            return token::Minus{};
+            return token::Minus{{}, source::Span{pos_ - 1}};
         case token::Asterisk::description():
             this->advance();
-            return token::Asterisk{};
+            return token::Asterisk{{}, source::Span{pos_ - 1}};
         case token::ForwardSlash::description():
             this->advance();
-            return token::ForwardSlash{};
+            return token::ForwardSlash{{}, source::Span{pos_ - 1}};
         default:
             throw error::InvalidToken(*current);
     }
@@ -431,7 +446,7 @@ auto Lexer::lex_next_token() -> Token {
     optional<char> peek = this->peek();
 
     if (!peek.has_value()) {
-        return token::Eof{};
+        return token::Eof{{}, source::Span{pos_ + 1}};
     }
 
     char current = *peek;
@@ -446,25 +461,15 @@ auto Lexer::lex_next_token() -> Token {
     }
 
     if (std::isdigit(static_cast<unsigned char>(current)) != 0) {
-        const optional<uint64_t> number = this->read_integer_literal();
-
-        return token::IntegerLiteral{{}, *number};
+        return this->read_integer_literal();
     }
 
     if (current == '"') {
-        std::string string = this->read_string_literal();
-
-        string.shrink_to_fit();
-
-        const size_t index = this->pool_->insert_string(std::move(string));
-
-        return token::StringLiteral{{}, index};
+        return this->read_string_literal();
     }
 
     if (current == '\'') {
-        const char character = this->read_character_literal();
-
-        return token::CharacterLiteral{{}, character};
+        return this->read_character_literal();
     }
 
     return this->read_literal_token();

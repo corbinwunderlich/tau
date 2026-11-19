@@ -8,6 +8,7 @@
 
 #include <tau/lexer/keyword.hpp>
 #include <tau/lexer/token.hpp>
+#include <tau/source/span.hpp>
 
 namespace lexer::keyword {
 namespace {
@@ -65,14 +66,15 @@ constexpr auto matches(std::string_view identifier, const char (&keyword)[N])
 }
 }  // namespace
 
-auto lookup(std::string_view identifier) -> std::optional<Token> {
+auto lookup(source::Span span, std::string_view identifier)
+    -> std::optional<Token> {
     const uint32_t identifier_hash = hash(identifier);
 
     switch (identifier_hash) {
 #define TAU_KEYWORDS_AS_SWITCH_CASE(type, lexeme, ...) \
     case hash(lexeme): {                               \
         if (matches(identifier, lexeme)) {             \
-            return lexer::token::type{};               \
+            return lexer::token::type{{}, span};       \
         }                                              \
         break;                                         \
     }

@@ -15,5 +15,17 @@ class Pos {
     auto offset() const noexcept -> size_t;
 
     auto advance(size_t by = 1) noexcept -> void;
+
+    [[nodiscard]]
+    auto operator+(const Pos& rhs) const noexcept -> Pos;
+
+    [[nodiscard]]
+    auto operator-(const Pos& rhs) const noexcept -> Pos;
+
+    [[nodiscard]]
+    auto operator==(const Pos& other) const noexcept -> bool;
+
+    [[nodiscard]]
+    auto operator!=(const Pos& other) const noexcept -> bool;
 };
 }  // namespace source

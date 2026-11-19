@@ -16,7 +16,7 @@ namespace token = lexer::token;
 namespace parser {
 auto Parser::next_token() -> lexer::Token {
     if (pos_ >= tokens_.size()) {
-        return lexer::token::Eof{};
+        return lexer::token::Eof{{}, source::Span{pos_}};
     }
 
     lexer::Token token = tokens_[pos_];
@@ -30,7 +30,7 @@ auto Parser::peek_token(size_t ahead) -> lexer::Token {
     const size_t index = pos_ + ahead;
 
     if (index >= tokens_.size()) {
-        return lexer::token::Eof{};
+        return lexer::token::Eof{{}, source::Span{index}};
     }
 
     return tokens_[index];

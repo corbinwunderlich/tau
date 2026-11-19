@@ -12,4 +12,20 @@ auto Pos::offset() const noexcept -> size_t {
 auto Pos::advance(size_t by) noexcept -> void {
     offset_ += by;
 }
+
+auto Pos::operator+(const Pos& rhs) const noexcept -> Pos {
+    return {offset_ + rhs.offset_};
+}
+
+auto Pos::operator-(const Pos& rhs) const noexcept -> Pos {
+    return {offset_ - rhs.offset_};
+}
+
+auto Pos::operator==(const Pos& other) const noexcept -> bool {
+    return this->offset_ == other.offset_;
+}
+
+auto Pos::operator!=(const Pos& other) const noexcept -> bool {
+    return !(*this == other);
+}
 }  // namespace source

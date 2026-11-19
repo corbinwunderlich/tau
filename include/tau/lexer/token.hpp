@@ -7,6 +7,7 @@
 #include <variant>
 
 #include <tau/error/unexpected_token.hpp>
+#include <tau/source/span.hpp>
 
 #define TAU_KEYWORDS(X)                                                                              \
     X(Func, "func", static_assert(true);)                                                            \
@@ -84,6 +85,10 @@ struct Token {
 
 #define TAU_TOKENS_AS_STRUCT(type, lexeme, ...)                          \
     struct type : public Token<type> {                                   \
+        friend struct Token<type>;                                       \
+                                                                         \
+        source::Span span;                                               \
+                                                                         \
         __VA_ARGS__                                                      \
                                                                          \
         static constexpr auto description() noexcept { return lexeme; }; \
