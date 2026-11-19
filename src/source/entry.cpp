@@ -7,8 +7,8 @@
 #include <utility>
 
 #include <tau/source/entry.hpp>
+#include <tau/source/location.hpp>
 #include <tau/source/pos.hpp>
-#include <tau/source/position.hpp>
 
 namespace source {
 Entry::Entry(std::string name, std::string text) noexcept
@@ -40,7 +40,7 @@ auto Entry::at(Pos pos) const noexcept -> std::optional<char> {
     return text_[pos.offset()];
 }
 
-auto Entry::resolve(Pos pos) const noexcept -> Position {
+auto Entry::resolve(Pos pos) const noexcept -> Location {
     const size_t offset = std::min(pos.offset(), text_.size());
 
     const auto next_line_offset = std::upper_bound(
@@ -49,7 +49,7 @@ auto Entry::resolve(Pos pos) const noexcept -> Position {
     const auto line = static_cast<size_t>(
         std::distance(line_start_offsets_.begin(), next_line_offset) - 1);
 
-    return Position{line, offset - line_start_offsets_[line]};
+    return Location{Line{line}, Col{offset - line_start_offsets_[line]}};
 }
 
 auto Entry::range(Pos start, size_t length) const noexcept -> std::string_view {

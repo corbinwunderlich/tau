@@ -6,8 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "location.hpp"
 #include "pos.hpp"
-#include "position.hpp"
 
 namespace source {
 class Entry {
@@ -29,7 +29,7 @@ class Entry {
     auto at(Pos pos) const noexcept -> std::optional<char>;
 
     [[nodiscard]]
-    auto resolve(Pos pos) const noexcept -> Position;
+    auto resolve(Pos pos) const noexcept -> Location;
 
     [[nodiscard]]
     auto range(Pos start, size_t length) const noexcept -> std::string_view;
