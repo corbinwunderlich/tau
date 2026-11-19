@@ -1,20 +1,20 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
-#include <tau/lexer/pool.hpp>
+#include <tau/source/entry.hpp>
 #include <tau/source/map.hpp>
 #include <tau/source/pos.hpp>
 
-#include "tau/source/entry.hpp"
+#include "cursor.hpp"
+#include "pool.hpp"
 #include "token.hpp"
 
 namespace lexer {
-using TokenStream = std::vector<Token>;
+struct TokenStream : public std::vector<Token> {};
 
 class Lexer {
   public:
@@ -29,13 +29,13 @@ class Lexer {
     auto lex() noexcept(false) -> TokenStream;
 
     [[nodiscard]]
+    auto pool() const noexcept -> std::shared_ptr<lexer::Pool>;
+
+    [[nodiscard]]
     auto source_map() const noexcept -> std::shared_ptr<source::Map>;
 
     [[nodiscard]]
     auto source_id() const noexcept -> source::Id;
-
-    [[nodiscard]]
-    auto pool() const noexcept -> std::shared_ptr<lexer::Pool>;
 
   private:
     std::shared_ptr<source::Map> source_map_;
@@ -43,30 +43,22 @@ class Lexer {
         std::make_shared<lexer::Pool>(lexer::Pool{});
 
     source::Id source_id_;
-    source::Pos pos_ = 0;
-
     const source::Entry& source_entry_ = source_map_->get(source_id_);
 
-    void advance(size_t ahead = 1);
-    void advance(std::optional<char>& current, size_t ahead = 1);
+    Cursor cursor_{source_entry_};
 
     [[nodiscard]]
-    auto current() const -> std::optional<char>;
+    auto span_from(source::Pos start) const noexcept -> source::Span;
 
-    [[nodiscard]]
-    auto peek(size_t ahead = 0) const -> std::optional<char>;
+    auto skip_whitespace_and_comments() noexcept -> void;
 
-    void skip_whitespace_and_comments();
+    auto read_escape_sequence() noexcept(false) -> char;
+    auto read_word() noexcept -> Token;
+    auto read_symbol() noexcept(false) -> Token;
+    auto read_number() noexcept(false) -> Token;
+    auto read_string() noexcept(false) -> Token;
+    auto read_character() noexcept(false) -> Token;
 
-    auto escape_character(char character) noexcept(false) -> char;
-
-    auto read_type() -> Token;
-    auto read_identifier_or_keyword() -> Token;
-    auto read_string_literal() noexcept(false) -> Token;
-    auto read_character_literal() noexcept(false) -> Token;
-    auto read_integer_literal() noexcept(false) -> Token;
-    auto read_literal_token() -> Token;
-
-    auto lex_next_token() -> Token;
+    auto next_token() noexcept(false) -> Token;
 };
 }  // namespace lexer

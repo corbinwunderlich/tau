@@ -22,8 +22,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::StringLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::StringLiteral>().span == source::Span{0, 5});
         CHECK_THAT(std::string(lexer.pool()->resolve_string(
                        tokens[0].get<token::StringLiteral>().index)),
@@ -36,12 +37,13 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::StringLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::StringLiteral>().span == source::Span{0, 7});
         CHECK_THAT(std::string(lexer.pool()->resolve_string(
                        tokens[0].get<token::StringLiteral>().index)),
-                   Equals(R"(test\")"));
+                   Equals(R"(test")"));
     }
 
     SECTION("lex empty character literal") {
@@ -56,8 +58,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::CharacterLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::CharacterLiteral>().span ==
               source::Span{0, 2});
         CHECK(tokens[0].get<token::CharacterLiteral>().value == 'a');
@@ -69,8 +72,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::CharacterLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::CharacterLiteral>().span ==
               source::Span{0, 3});
         CHECK(tokens[0].get<token::CharacterLiteral>().value == '\'');
@@ -82,8 +86,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::CharacterLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::CharacterLiteral>().span ==
               source::Span{0, 3});
         CHECK(tokens[0].get<token::CharacterLiteral>().value == '\n');
@@ -95,8 +100,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::CharacterLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::CharacterLiteral>().span ==
               source::Span{0, 5});
         CHECK(tokens[0].get<token::CharacterLiteral>().value == '\x2a');
@@ -108,8 +114,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::IntegerLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::IntegerLiteral>().span ==
               source::Span{0, 2});
         CHECK(tokens[0].get<token::IntegerLiteral>().value == 358);
@@ -121,8 +128,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::IntegerLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::IntegerLiteral>().span ==
               source::Span{0, 7});
         CHECK(tokens[0].get<token::IntegerLiteral>().value == 0b100101);
@@ -134,8 +142,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::IntegerLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::IntegerLiteral>().span ==
               source::Span{0, 4});
         CHECK(tokens[0].get<token::IntegerLiteral>().value == 0641);
@@ -147,8 +156,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::IntegerLiteral>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::IntegerLiteral>().span ==
               source::Span{0, 5});
         CHECK(tokens[0].get<token::IntegerLiteral>().value == 0x2b79);
@@ -160,8 +170,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::Identifier>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::Identifier>().span == source::Span{0, 8});
         CHECK_THAT(std::string(lexer.pool()->resolve_ident(
                        tokens[0].get<token::Identifier>().index)),
@@ -174,8 +185,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::Func>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::Func>().span == source::Span{0, 3});
     }
 
@@ -185,8 +197,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::Type>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::Type>().span == source::Span{0, 2});
         CHECK_THAT(std::string(lexer.pool()->resolve_ident(
                        tokens[0].get<token::Type>().index)),
@@ -199,8 +212,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::ForwardSlash>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::ForwardSlash>().span == source::Span{0, 0});
     }
 
@@ -210,8 +224,9 @@ TEST_CASE("Lexer correctly tokenizes src", "[Lexer]") {
         TokenStream tokens;
 
         REQUIRE_NOTHROW(tokens = lexer.lex());
-        REQUIRE_THAT(tokens, SizeIs(1));
+        REQUIRE_THAT(tokens, SizeIs(2));
         REQUIRE_NOTHROW(tokens[0].expect<token::Equals>());
+        CHECK_NOTHROW(tokens[1].expect<token::Eof>());
         CHECK(tokens[0].get<token::Equals>().span == source::Span{0, 0});
     }
 

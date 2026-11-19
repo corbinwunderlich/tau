@@ -66,7 +66,7 @@ constexpr auto matches(std::string_view identifier, const char (&keyword)[N])
 }
 }  // namespace
 
-auto lookup(source::Span span, std::string_view identifier)
+auto lookup(source::Span span, std::string_view identifier) noexcept
     -> std::optional<Token> {
     const uint32_t identifier_hash = hash(identifier);
 

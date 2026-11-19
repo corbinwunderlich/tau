@@ -8,6 +8,6 @@
 
 namespace lexer::keyword {
 [[nodiscard]]
-auto lookup(source::Span span, std::string_view identifier)
+auto lookup(source::Span span, std::string_view identifier) noexcept
     -> std::optional<Token>;
 }  // namespace lexer::keyword

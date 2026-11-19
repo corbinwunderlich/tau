@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <ostream>
+#include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
@@ -9,65 +11,39 @@
 #include <tau/error/unexpected_token.hpp>
 #include <tau/source/span.hpp>
 
-#define TAU_KEYWORDS(X)                                                                              \
-    X(Func, "func", static_assert(true);)                                                            \
-    X(Return, "return", static_assert(true);)                                                        \
-                                                                                                     \
-    /*X(Let, ;)*/                                                                                    \
-    X(Var, "var", static_assert(true);)                                                              \
-                                                                                                     \
-    /*X(If, static_assert(true);)                                                                    \
-    X(Else, static_assert(true);)                                                                    \
-                                                                                                   \ \
-    X(While, static_assert(true);)                                                                   \
-    X(For, static_assert(true);)                                                                     \
-    X(Continue, static_assert(true);)                                                                \
-    X(Break, ;)*/
+#define TAU_KEYWORDS(X)   \
+    X(Func, "func", )     \
+    X(Return, "return", ) \
+    X(Var, "var", )
 
-#define TAU_SYMBOLS(X)                                                                               \
-    X(Semicolon, ';', static_assert(true);)                                                          \
-    X(Comma, ',', static_assert(true);)                                                              \
-                                                                                                     \
-    X(LeftParen, '(', static_assert(true);)                                                          \
-    X(RightParen, ')', static_assert(true);)                                                         \
-    X(LeftBrace, '{', static_assert(true);)                                                          \
-    X(RightBrace, '}', static_assert(true);)                                                         \
-    X(LeftBracket, '[', static_assert(true);)                                                        \
-    X(RightBracket, ']', static_assert(true);)                                                       \
-                                                                                                     \
-    X(Equals, '=', static_assert(true);)                                                             \
-    /*X(DoubleEquals, static_assert(true);)                                                          \
-    X(NotEquals, static_assert(true);)                                                               \
-                                                                                                   \ \
-    X(LessThan, static_assert(true);)                                                                \
-    X(GreaterThan, static_assert(true);)                                                             \
-    X(LessThanEquals, static_assert(true);)                                                          \
-    X(GreaterThanEquals, static_assert(true);)                                                       \
-                                                                                                   \ \
-    X(LogicalOr, static_assert(true);)                                                               \
-    X(LogicalAnd, static_assert(true);)                                                              \
-                                                                                                   \ \
-    X(Or, static_assert(true);)                                                                      \
-    X(Xor, static_assert(true);)                                                                     \
-    X(And, ;)*/                                                                                      \
-                                                                                                     \
-    X(Plus, '+', static_assert(true);)                                                               \
-    X(Minus, '-', static_assert(true);)                                                              \
-    X(Asterisk, '*', static_assert(true);)                                                           \
-    X(ForwardSlash, '/', static_assert(true);)
+#define TAU_SYMBOLS(X)     \
+    X(Semicolon, ";", )    \
+    X(Comma, ",", )        \
+    X(LeftParen, "(", )    \
+    X(RightParen, ")", )   \
+    X(LeftBrace, "{", )    \
+    X(RightBrace, "}", )   \
+    X(LeftBracket, "[", )  \
+    X(RightBracket, "]", ) \
+    X(Equals, "=", )       \
+    X(Plus, "+", )         \
+    X(Minus, "-", )        \
+    X(Asterisk, "*", )     \
+    X(ForwardSlash, "/", )
 
-#define TAU_TOKENS(X)                                     \
-    TAU_KEYWORDS(X)                                       \
-    TAU_SYMBOLS(X)                                        \
-                                                          \
+#define TAU_LITERALS(X)                                   \
     X(Type, "type", size_t index;)                        \
     X(Identifier, "identifier", size_t index;)            \
                                                           \
     X(StringLiteral, "string literal", size_t index;)     \
     X(CharacterLiteral, "character literal", char value;) \
-    X(IntegerLiteral, "integer literal", uint64_t value;) \
-                                                          \
-    X(Eof, "end of file", static_assert(true);)
+    X(IntegerLiteral, "integer literal", uint64_t value;)
+
+#define TAU_TOKENS(X) \
+    TAU_KEYWORDS(X)   \
+    TAU_SYMBOLS(X)    \
+    TAU_LITERALS(X)   \
+    X(Eof, "end of file", )
 
 namespace lexer::token {
 template <typename Derived>
@@ -83,26 +59,28 @@ struct Token {
     }
 };
 
-#define TAU_TOKENS_AS_STRUCT(type, lexeme, ...)                          \
-    struct type : public Token<type> {                                   \
-        friend struct Token<type>;                                       \
-                                                                         \
-        source::Span span;                                               \
-                                                                         \
-        __VA_ARGS__                                                      \
-                                                                         \
-        static constexpr auto description() noexcept { return lexeme; }; \
+#define TAU_DEFINE_TOKEN(Name, Description, ...)                           \
+    struct Name : public Token<Name> {                                     \
+        friend struct Token<Name>;                                         \
+                                                                           \
+        source::Span span;                                                 \
+                                                                           \
+        __VA_ARGS__                                                        \
+                                                                           \
+        static constexpr auto description() noexcept -> std::string_view { \
+            return Description;                                            \
+        };                                                                 \
     };
 
-TAU_TOKENS(TAU_TOKENS_AS_STRUCT)
+TAU_TOKENS(TAU_DEFINE_TOKEN)
 
-#undef TAU_TOKENS_AS_STRUCT
+#undef TAU_DEFINE_TOKEN
 }  // namespace lexer::token
 
 namespace lexer::detail {
-#define TAU_TOKENS_AS_TUPLE(Token, ...) lexer::token::Token,
-using TokenTuple = std::tuple<TAU_TOKENS(TAU_TOKENS_AS_TUPLE) std::monostate>;
-#undef TAU_TOKENS_AS_TUPLE
+#define TAU_TOKEN_VARIANTS(Token, ...) lexer::token::Token,
+using TokenTuple = std::tuple<TAU_TOKENS(TAU_TOKEN_VARIANTS) std::monostate>;
+#undef TAU_TOKEN_VARIANTS
 
 template <typename, typename>
 struct TokenBuilder;
@@ -188,4 +166,6 @@ class Token : public detail::TokenVariant {
         });
     }
 };
+
+auto operator<<(std::ostream& os, const Token& token) -> std::ostream&;
 }  // namespace lexer

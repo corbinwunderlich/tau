@@ -1,8 +1,9 @@
 #include <cctype>
 #include <charconv>
-#include <limits>
+#include <cstdint>
 #include <memory>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <system_error>
 
@@ -18,24 +19,65 @@
 #include <tau/lexer/pool.hpp>
 #include <tau/lexer/token.hpp>
 #include <tau/source/map.hpp>
+#include <tau/source/pos.hpp>
 #include <tau/source/span.hpp>
 
-using std::nullopt;
-using std::optional;
+#include "symbols.hpp"
 
 namespace lexer {
-auto Lexer::lex() -> TokenStream {
-    TokenStream token_stream;
+namespace {
+auto is_space(char c) noexcept -> bool {
+    return std::isspace(static_cast<unsigned char>(c)) != 0;
+}
 
-    while (pos_.offset() < source_entry_.text().length()) {
-        Token token = this->lex_next_token();
+auto is_word_start(char c) noexcept -> bool {
+    return std::isalpha(static_cast<unsigned char>(c)) != 0;
+}
 
-        token_stream.push_back(token);
+auto is_word_continue(char c) noexcept -> bool {
+    return std::isalnum(static_cast<unsigned char>(c)) != 0;
+}
+
+auto is_upper(char c) noexcept -> bool {
+    return std::isupper(static_cast<unsigned char>(c)) != 0;
+}
+
+auto is_digit_base(Base base, char c) noexcept -> bool {
+    switch (base) {
+        case Base::Binary:
+            return c == '0' || c == '1';
+        case Base::Octal:
+            return c >= '0' && c <= '7';
+        case Base::Decimal:
+            return std::isdigit(static_cast<unsigned char>(c)) != 0;
+        case Base::Hexadecimal:
+            return std::isxdigit(static_cast<unsigned char>(c)) != 0;
     }
 
-    token_stream.shrink_to_fit();
+    return false;
+}
+}  // namespace
 
-    return token_stream;
+auto Lexer::lex() -> TokenStream {
+    TokenStream tokens;
+
+    while (true) {
+        this->skip_whitespace_and_comments();
+
+        if (cursor_.eof()) {
+            break;
+        }
+
+        Token token = this->next_token();
+
+        tokens.push_back(token);
+    }
+
+    tokens.push_back(token::Eof{{}, source::Span{cursor_.pos()}});
+
+    tokens.shrink_to_fit();
+
+    return tokens;
 }
 
 auto Lexer::source_map() const noexcept -> std::shared_ptr<source::Map> {
@@ -50,51 +92,34 @@ auto Lexer::pool() const noexcept -> std::shared_ptr<lexer::Pool> {
     return pool_;
 }
 
-inline void Lexer::advance(size_t ahead) {
-    pos_.advance(ahead);
+auto Lexer::span_from(source::Pos start) const noexcept -> source::Span {
+    return source::Span{start, cursor_.pos() - 1};
 }
 
-inline void Lexer::advance(optional<char>& current, size_t ahead) {
-    this->advance(ahead);
-    current = this->current();
-}
-
-auto Lexer::current() const -> optional<char> {
-    return source_entry_.at(pos_);
-}
-
-auto Lexer::peek(size_t ahead) const -> optional<char> {
-    const source::Pos pos = pos_ + ahead;
-
-    return source_entry_.at(pos);
-}
-
-inline void Lexer::skip_whitespace_and_comments() {
-    optional<char> current = this->current();
-
-    while (true) {
-        if (!current.has_value()) {
-            return;
-        }
-
-        if (std::isspace(static_cast<unsigned char>(*current)) != 0) {
-            this->advance(current);
+auto Lexer::skip_whitespace_and_comments() noexcept -> void {
+    while (const char character = *cursor_.peek()) {
+        if (is_space(character)) {
+            cursor_.advance();
 
             continue;
         }
 
-        if (*current != '#') {
+        if (character != '#') {
             return;
         }
 
-        while (current.has_value() && *current != '\n') {
-            this->advance(current);
-        }
+        cursor_.take_while([](char c) -> bool { return c != '\n'; });
     }
 }
 
-auto Lexer::escape_character(char character) -> char {
-    switch (character) {
+auto Lexer::read_escape_sequence() -> char {
+    const std::optional<char> character = cursor_.bump();
+
+    if (!character.has_value()) {
+        throw error::BadEscapeSequence("unterminated escape sequence");
+    }
+
+    switch (*character) {
         case '0':
             return '\0';
         case 'a':
@@ -114,364 +139,189 @@ auto Lexer::escape_character(char character) -> char {
         case '"':
             return '"';
         case 'x': {
-            this->advance();
+            const std::string_view digits = cursor_.take(2);
 
-            char hex = 0;
+            unsigned char value = 0;
 
             const auto [_, ec] = std::from_chars(
-                source_entry_.text().data() + pos_.offset(),
-                source_entry_.text().data() + pos_.offset() + 2, hex, 16);
+                digits.data(), digits.data() + digits.size(), value, 16);
 
-            if (ec != std::errc()) {
-                throw error::BadEscapeSequence("invalid hex code");
+            if (digits.size() != 2 || ec != std::errc()) {
+                throw error::BadEscapeSequence("invalid hex escape sequence");
             }
 
-            if (hex > std::numeric_limits<char>::max()) {
-                throw error::BadEscapeSequence(
-                    "hex code is larger than a char");
-            }
-
-            this->advance();
-
-            return hex;
+            return static_cast<char>(value);
         }
         default:
             throw error::BadEscapeSequence();
     }
 }
 
-inline auto Lexer::read_type() -> Token {
-    const source::Pos start = pos_;
+auto Lexer::read_word() noexcept -> Token {
+    const source::Pos start = cursor_.pos();
+    const std::string_view word = cursor_.take_while(is_word_continue);
+    const source::Span span = this->span_from(start);
 
-    optional<char> current = this->current();
-
-    while (current.has_value() &&
-           std::isalnum(static_cast<unsigned char>(*current)) != 0) {
-        this->advance(current);
+    if (is_upper(word.front())) {
+        return token::Type{{}, span, pool_->insert_ident(word)};
     }
 
-    const std::string_view identifier =
-        source_entry_.range(start, pos_.offset() - start.offset());
-
-    const size_t index = this->pool_->insert_ident(identifier);
-
-    return token::Type{{}, source::Span{start, pos_ - 1}, index};
-}
-
-inline auto Lexer::read_identifier_or_keyword() -> Token {
-    const source::Pos start = pos_;
-
-    optional<char> current = this->current();
-
-    while (current.has_value() &&
-           std::isalnum(static_cast<unsigned char>(*current)) != 0) {
-        this->advance(current);
-    }
-
-    const std::string_view identifier =
-        source_entry_.range(start, pos_.offset() - start.offset());
-
-    const source::Span span{start, pos_ - 1};
-
-    if (const auto keyword = keyword::lookup(span, identifier);
+    if (const std::optional<Token> keyword = keyword::lookup(span, word);
         keyword.has_value()) {
         return *keyword;
     }
 
-    const size_t index = this->pool_->insert_ident(identifier);
-
-    return token::Identifier{{}, span, index};
+    return token::Identifier{{}, span, pool_->insert_ident(word)};
 }
 
-inline auto Lexer::read_string_literal() -> Token {
-    this->advance();
+auto Lexer::read_symbol() -> Token {
+    const source::Pos start = cursor_.pos();
 
-    const source::Pos start = pos_;
-
-    optional<char> current = this->current();
-    bool escaped = false;
-
-    while (current.has_value() && (*current != '"' || escaped)) {
-        escaped = current == '\\';
-
-        this->advance(current);
-    }
-
-    if (!current.has_value()) {
-        throw error::UnexpectedToken(token::Eof::description(), '"');
-    }
-
-    this->advance();
-
-    const auto string = std::string(
-        source_entry_.range(start, pos_.offset() - start.offset() - 1));
-
-    const size_t index = this->pool_->insert_string(string);
-
-    return token::StringLiteral{{}, source::Span{start - 1, pos_ - 1}, index};
-}
-
-inline auto Lexer::read_character_literal() -> Token {
-    const source::Pos start = pos_;
-
-    this->advance();
-
-    optional<char> current = this->current();
-
-    if (*current == '\'') {
-        throw error::EmptyCharacterLiteral();
-    }
-
-    if (*current != '\\') {
-        this->advance();
-
-        optional<char> next_char = this->current();
-
-        if (!next_char.has_value()) {
-            throw error::UnexpectedToken(token::Eof::description(), '\'');
+    for (const detail::SymbolEntry& entry : detail::symbols) {
+        if (!cursor_.match(entry.lexeme)) {
+            continue;
         }
 
-        if (*next_char != '\'') {
-            throw error::UnexpectedToken(*next_char, '\'');
-        }
-
-        this->advance();
-
-        return token::CharacterLiteral{
-            {}, source::Span{start, pos_ - 1}, *current};
+        return entry.make(this->span_from(start));
     }
 
-    this->advance(current);
-
-    if (!current.has_value()) {
-        throw error::BadEscapeSequence();
-    }
-
-    char character = this->escape_character(*current);
-
-    this->advance(2);
-
-    return token::CharacterLiteral{
-        {}, source::Span{start, pos_ - 1}, character};
+    throw error::InvalidToken(*cursor_.peek());
 }
 
-inline auto Lexer::read_integer_literal() -> Token {
-    optional<char> current = this->current();
+auto Lexer::read_number() -> Token {
+    const source::Pos start = cursor_.pos();
 
-    const source::Pos start = pos_;
-
-    source::Pos digits_start = pos_;
     Base base = Base::Decimal;
 
-    if (*current == '0') {
-        const optional<char> peek = this->peek(1);
-
-        if (!peek.has_value()) {
-            return token::IntegerLiteral{{}, source::Span{pos_, pos_}, 0};
-        }
-
-        switch (*peek) {
+    if (cursor_.peek() == '0') {
+        switch (cursor_.peek(1).value_or('\0')) {
             case 'x':
+            case 'X':
                 base = Base::Hexadecimal;
                 break;
             case 'o':
+            case 'O':
                 base = Base::Octal;
                 break;
             case 'b':
+            case 'B':
                 base = Base::Binary;
                 break;
             default:
-                throw error::BadIntegerLiteralPrefix(*peek);
-        }
-
-        this->advance(current, 2);
-
-        digits_start = pos_;
-    }
-
-    while (current.has_value()) {
-        this->advance(current);
-
-        switch (base) {
-            case Base::Binary:
-                if (*current == '0' || *current == '1') {
-                    continue;
-                }
-
-                break;
-            case Base::Octal:
-                if (*current >= '0' && *current <= '7') {
-                    continue;
-                }
-
-                break;
-            case Base::Decimal:
-                if (std::isdigit(static_cast<unsigned char>(*current)) != 0) {
-                    continue;
-                }
-
-                break;
-            case Base::Hexadecimal:
-                if (std::isxdigit(static_cast<unsigned char>(*current)) != 0) {
-                    continue;
-                }
-
                 break;
         }
 
-        break;
+        if (base != Base::Decimal) {
+            cursor_.advance(2);
+        }
     }
 
-    uint64_t number;
+    const std::string_view digits = cursor_.take_while(
+        [base](char c) -> bool { return is_digit_base(base, c); });
+
+    if (digits.empty()) {
+        throw error::BadIntegerLiteral(base);
+    }
+
+    if (const std::optional<char> next = cursor_.peek();
+        next.has_value() && is_word_continue(*next)) {
+        cursor_.take_while(is_word_continue);
+
+        throw error::BadIntegerLiteral(base);
+    }
+
+    uint64_t value = 0;
 
     const auto [_, ec] =
-        std::from_chars(source_entry_.text().data() + digits_start.offset(),
-                        source_entry_.text().data() + pos_.offset(), number,
+        std::from_chars(digits.data(), digits.data() + digits.size(), value,
                         static_cast<uint8_t>(base));
 
     if (ec != std::errc()) {
         throw error::BadIntegerLiteral(base);
     }
 
-    return token::IntegerLiteral{{}, source::Span{start, pos_ - 1}, number};
+    return token::IntegerLiteral{{}, this->span_from(start), value};
 }
 
-inline auto Lexer::read_literal_token() -> Token {
-    const optional<char> current = this->current();
+auto Lexer::read_string() -> Token {
+    const source::Pos start = cursor_.pos();
 
-    if (!current.has_value()) {
-        return token::Eof{{}, source::Span{pos_}};
-    }
+    cursor_.advance();
 
-    // const optional<char> peek = this->peek(1);
+    std::string value;
 
-    switch (*current) {
-        case token::Semicolon::description():
-            this->advance();
-            return token::Semicolon{{}, source::Span{pos_ - 1}};
-        case token::Comma::description():
-            this->advance();
-            return token::Comma{{}, source::Span{pos_ - 1}};
-        case token::LeftParen::description():
-            this->advance();
-            return token::LeftParen{{}, source::Span{pos_ - 1}};
-        case token::RightParen::description():
-            this->advance();
-            return token::RightParen{{}, source::Span{pos_ - 1}};
-        case token::LeftBrace::description():
-            this->advance();
-            return token::LeftBrace{{}, source::Span{pos_ - 1}};
-        case token::RightBrace::description():
-            this->advance();
-            return token::RightBrace{{}, source::Span{pos_ - 1}};
-        case token::LeftBracket::description():
-            this->advance();
-            return token::LeftBracket{{}, source::Span{pos_ - 1}};
-        case token::RightBracket::description():
-            this->advance();
-            return token::RightBracket{{}, source::Span{pos_ - 1}};
-        case token::Equals::description():
-            this->advance();
-            return token::Equals{{}, source::Span{pos_ - 1}};
-            // if (peek != '=') {
-            //     this->advance();
-            //     return token::Equals{};
-            // }
-            //
-            // this->advance(2);
-            // return token::DoubleEquals{};
-        // case '!':
-        //     if (peek == '=') {
-        //         this->advance();
-        //         return token::NotEquals{};
-        //     }
-        //
-        //     this->advance(2);
-        //     return token::Invalid{};
-        // case '<':
-        //     if (peek != '=') {
-        //         this->advance();
-        //         return token::LessThan{};
-        //     }
-        //
-        //     this->advance(2);
-        //     return token::LessThanEquals{};
-        // case '>':
-        //     if (peek != '=') {
-        //         this->advance();
-        //         return token::GreaterThan{};
-        //     }
-        //
-        //     this->advance(2);
-        //     return token::GreaterThanEquals{};
-        // case '|':
-        //     if (peek != '|') {
-        //         this->advance();
-        //         return token::Or{};
-        //     }
-        //
-        //     this->advance(2);
-        //     return token::LogicalOr{};
-        // case '&':
-        //     if (peek != '&') {
-        //         this->advance();
-        //         return token::And{};
-        //     }
-        //
-        //     this->advance(2);
-        //     return token::LogicalAnd{};
-        // case '^':
-        //     this->advance();
-        //     return token::Xor{};
-        case token::Plus::description():
-            this->advance();
-            return token::Plus{{}, source::Span{pos_ - 1}};
-        case token::Minus::description():
-            this->advance();
-            return token::Minus{{}, source::Span{pos_ - 1}};
-        case token::Asterisk::description():
-            this->advance();
-            return token::Asterisk{{}, source::Span{pos_ - 1}};
-        case token::ForwardSlash::description():
-            this->advance();
-            return token::ForwardSlash{{}, source::Span{pos_ - 1}};
-        default:
-            throw error::InvalidToken(*current);
-    }
-}
+    while (true) {
+        const std::optional<char> character = cursor_.bump();
 
-auto Lexer::lex_next_token() -> Token {
-    this->skip_whitespace_and_comments();
-
-    optional<char> peek = this->peek();
-
-    if (!peek.has_value()) {
-        return token::Eof{{}, source::Span{pos_ + 1}};
-    }
-
-    char current = *peek;
-
-    if (std::isalpha(static_cast<unsigned char>(current)) != 0) {
-        if (static_cast<bool>(
-                std::isupper(static_cast<unsigned char>(current)))) {
-            return this->read_type();
+        if (!character.has_value()) {
+            throw error::UnexpectedToken(token::Eof::description(), '"');
         }
 
-        return this->read_identifier_or_keyword();
+        if (*character == '"') {
+            break;
+        }
+
+        if (*character == '\\') {
+            value.push_back(this->read_escape_sequence());
+
+            continue;
+        }
+
+        value.push_back(*character);
     }
 
-    if (std::isdigit(static_cast<unsigned char>(current)) != 0) {
-        return this->read_integer_literal();
+    return token::StringLiteral{
+        {}, this->span_from(start), pool_->insert_string(value)};
+}
+
+auto Lexer::read_character() -> Token {
+    const source::Pos start = cursor_.pos();
+
+    cursor_.advance();
+
+    const std::optional<char> character = cursor_.bump();
+
+    if (!character.has_value()) {
+        throw error::UnexpectedToken(token::Eof::description(), '\'');
     }
 
-    if (current == '"') {
-        return this->read_string_literal();
+    if (*character == '\'') {
+        throw error::EmptyCharacterLiteral();
     }
 
-    if (current == '\'') {
-        return this->read_character_literal();
+    const char value =
+        (*character == '\\') ? this->read_escape_sequence() : *character;
+
+    if (!cursor_.match('\'')) {
+        std::optional<char> peek = cursor_.peek();
+
+        throw error::UnexpectedToken(peek.has_value()
+                                         ? std::string_view{&*peek, 1}
+                                         : token::Eof::description(),
+                                     "'");
     }
 
-    return this->read_literal_token();
+    return token::CharacterLiteral{{}, this->span_from(start), value};
+}
+
+auto Lexer::next_token() -> Token {
+    char character = *cursor_.peek();
+
+    if (is_word_start(character)) {
+        return this->read_word();
+    }
+
+    if (is_digit_base(Base::Decimal, character)) {
+        return this->read_number();
+    }
+
+    switch (character) {
+        case '"':
+            return this->read_string();
+        case '\'':
+            return this->read_character();
+        default:
+            return this->read_symbol();
+    }
 }
 }  // namespace lexer

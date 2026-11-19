@@ -322,6 +322,12 @@ auto Parser::parse() -> ast::Ast {
     std::vector<node::Decl> nodes;
 
     while (pos_ < tokens_.size()) {
+        if (pos_ == tokens_.size() - 1) {
+            this->next_token().expect<token::Eof>();
+
+            break;
+        }
+
         nodes.push_back(this->parse_decl());
     }
 
