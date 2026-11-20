@@ -32,17 +32,8 @@ Factor       ::= FunctionCall
                | INTEGER_LITERAL
                | Group
 
-Mult ::= Factor "*" Term
-Div  ::= Factor "/" Term
-Term ::= Factor
-       | Mult
-       | Div
-
-Add  ::= Term "+" Expr
-Sub  ::= Term "-" Expr
-Expr ::= Term
-       | Add
-       | Sub
+Term ::= Factor (("*" | "/") Factor)*
+Expr ::= Term (("+" | "-") Term)*
 
 Block      ::= "{" Stmt* "}"
 VarDecl    ::= "var" IDENT TYPE ";"

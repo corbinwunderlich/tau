@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstddef>
 #include <memory>
 #include <utility>
@@ -142,33 +143,32 @@ auto Parser::parse_term() -> node::Expr {
 }
 
 auto Parser::parse_expr() -> node::Expr {
-    node::Expr term = this->parse_term();
+    node::Expr lhs = this->parse_term();
 
-    const Token token = this->peek_token();
+    while (true) {
+        const Token operation = this->peek_token();
 
-    if (token.is_not<token::Plus, token::Minus>()) {
-        return term;
+        if (operation.is_not<token::Plus, token::Minus>()) {
+            break;
+        }
+
+        this->next_token();
+
+        auto rhs = std::make_unique<node::Expr>(this->parse_expr());
+
+        lhs = operation.visit(
+            [&lhs, &rhs](token::Plus) -> node::Expr {
+                return node::Add{std::make_unique<node::Expr>(std::move(lhs)),
+                                 std::move(rhs)};
+            },
+            [&lhs, &rhs](token::Minus) -> node::Expr {
+                return node::Sub{std::make_unique<node::Expr>(std::move(lhs)),
+                                 std::move(rhs)};
+            },
+            [](auto&&) -> node::Expr { assert(false); });
     }
 
-    const Token operation = this->next_token();
-
-    auto lhs = std::make_unique<node::Expr>(std::move(term));
-    auto rhs = std::make_unique<node::Expr>(this->parse_expr());
-
-    node::Expr expression = operation.visit(
-        [&lhs, &rhs](token::Plus) -> node::Expr {
-            return node::Add{std::move(lhs), std::move(rhs)};
-        },
-        [&lhs, &rhs](token::Minus) -> node::Expr {
-            return node::Sub{std::move(lhs), std::move(rhs)};
-        },
-        [](auto&& arg) -> node::Expr {
-            throw error::UnexpectedToken(arg.description(),
-                                         token::Plus::description(),
-                                         token::Minus::description());
-        });
-
-    return expression;
+    return lhs;
 }
 
 auto Parser::parse_block() -> node::Block {
