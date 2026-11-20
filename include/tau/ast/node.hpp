@@ -133,19 +133,6 @@ class FunctionCall : public Node<FunctionCall> {
         -> void;
 };
 
-class Assignment : public Node<Assignment> {
-  private:
-    Ident ident_;
-    std::unique_ptr<Expr> expr_;
-
-  public:
-    Assignment(Ident ident, std::unique_ptr<Expr> expr)
-        : ident_(ident), expr_(std::move(expr)) {}
-
-    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void;
-};
-
 class Group : public Node<Group> {
   private:
     std::unique_ptr<Expr> expr_;
@@ -214,7 +201,6 @@ class Expr : public std::variant<Ident,
                                  CharacterLiteral,
                                  IntegerLiteral,
                                  FunctionCall,
-                                 Assignment,
                                  Group,
                                  Mult,
                                  Div,
@@ -308,7 +294,20 @@ class Return : public Node<Return> {
         -> void;
 };
 
-class Stmt : public std::variant<Expr, Block, VarDecl, Return>,
+class Assignment : public Node<Assignment> {
+  private:
+    std::unique_ptr<Expr> lhs_;
+    std::unique_ptr<Expr> rhs_;
+
+  public:
+    Assignment(std::unique_ptr<Expr> lhs, std::unique_ptr<Expr> rhs)
+        : lhs_(std::move(lhs)), rhs_(std::move(rhs)) {}
+
+    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
+        -> void;
+};
+
+class Stmt : public std::variant<Expr, Block, VarDecl, Return, Assignment>,
              public Node<Stmt> {
   public:
     using variant::variant;
@@ -317,7 +316,7 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return>,
         -> void;
 };
 
-class Decl : public std::variant<VarDecl, FunctionDecl, Expr>,
+class Decl : public std::variant<VarDecl, FunctionDecl, Stmt>,
              public Node<Decl> {
   public:
     using variant::variant;

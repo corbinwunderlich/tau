@@ -50,17 +50,6 @@ auto FunctionCall::dump(const lexer::Pool& pool,
     stream << "]}";
 }
 
-auto Assignment::dump(const lexer::Pool& pool,
-                      std::stringstream& stream) const noexcept -> void {
-    stream << R"({"ident":)";
-    this->ident_.dump(pool, stream);
-
-    stream << R"(,"expr":)";
-    this->expr_->dump(pool, stream);
-
-    stream << '}';
-}
-
 auto Group::dump(const lexer::Pool& pool,
                  std::stringstream& stream) const noexcept -> void {
     stream << R"({"expr":)";
@@ -213,6 +202,17 @@ auto Return::dump(const lexer::Pool& pool,
     stream << '}';
 }
 
+auto Assignment::dump(const lexer::Pool& pool,
+                      std::stringstream& stream) const noexcept -> void {
+    stream << R"({"lhs":)";
+    this->lhs_->dump(pool, stream);
+
+    stream << R"(,"rhs":)";
+    this->rhs_->dump(pool, stream);
+
+    stream << '}';
+}
+
 auto Stmt::dump(const lexer::Pool& pool,
                 std::stringstream& stream) const noexcept -> void {
     stream << '{';
@@ -229,6 +229,8 @@ auto Stmt::dump(const lexer::Pool& pool,
                 stream << R"("var_decl":)";
             } else if constexpr (std::is_same_v<T, Return>) {
                 stream << R"("return":)";
+            } else if constexpr (std::is_same_v<T, Assignment>) {
+                stream << R"("assignment":)";
             }
 
             static_cast<const Node<T>&>(node).dump(pool, stream);
@@ -250,8 +252,8 @@ auto Decl::dump(const lexer::Pool& pool,
                 stream << R"("var_decl":)";
             } else if constexpr (std::is_same_v<T, FunctionDecl>) {
                 stream << R"("function_decl":)";
-            } else if constexpr (std::is_same_v<T, Expr>) {
-                stream << R"("expr":)";
+            } else if constexpr (std::is_same_v<T, Stmt>) {
+                stream << R"("stmt":)";
             }
 
             static_cast<const Node<T>&>(node).dump(pool, stream);

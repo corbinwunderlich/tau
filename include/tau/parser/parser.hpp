@@ -49,10 +49,6 @@ class Parser {
         -> ast::node::FunctionCall;
 
     [[nodiscard]]
-    auto parse_assignment(lexer::token::Identifier identifier)
-        -> ast::node::Assignment;
-
-    [[nodiscard]]
     auto parse_factor() -> ast::node::Expr;
 
     [[nodiscard]]
@@ -72,6 +68,10 @@ class Parser {
 
     [[nodiscard]]
     auto parse_return() -> ast::node::Return;
+
+    [[nodiscard]]
+    auto parse_assignment(std::unique_ptr<ast::node::Expr> lhs)
+        -> ast::node::Assignment;
 
     [[nodiscard]]
     auto parse_stmt() -> ast::node::Stmt;

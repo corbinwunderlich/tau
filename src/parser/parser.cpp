@@ -5,6 +5,7 @@
 
 #include <tau/ast/node.hpp>
 #include <tau/error/too_many_parameters.hpp>
+#include <tau/error/unexpected_token.hpp>
 #include <tau/lexer/token.hpp>
 #include <tau/parser/parser.hpp>
 
@@ -13,19 +14,19 @@ using lexer::Token;
 namespace token = lexer::token;
 
 namespace parser {
-auto Parser::next_token() -> lexer::Token {
+auto Parser::next_token() -> Token {
     if (pos_ >= tokens_.size()) {
         return lexer::token::Eof{source::Span{pos_}};
     }
 
-    lexer::Token token = tokens_[pos_];
+    Token token = tokens_[pos_];
 
     pos_++;
 
     return token;
 }
 
-auto Parser::peek_token(size_t ahead) -> lexer::Token {
+auto Parser::peek_token(size_t ahead) -> Token {
     const size_t index = pos_ + ahead;
 
     if (index >= tokens_.size()) {
@@ -64,14 +65,6 @@ auto Parser::parse_function_call(token::Identifier identifier)
     return node::FunctionCall{node::Ident(identifier), std::move(params)};
 }
 
-auto Parser::parse_assignment(token::Identifier identifier)
-    -> node::Assignment {
-    this->next_token().expect<token::Equals>();
-
-    return node::Assignment{node::Ident(identifier),
-                            std::make_unique<node::Expr>(this->parse_expr())};
-}
-
 auto Parser::parse_factor() -> node::Expr {
     const Token token = this->peek_token();
 
@@ -82,9 +75,6 @@ auto Parser::parse_factor() -> node::Expr {
             return this->peek_token().visit(
                 [this, &identifier](token::LeftParen) -> node::Expr {
                     return this->parse_function_call(identifier);
-                },
-                [this, &identifier](token::Equals) -> node::Expr {
-                    return this->parse_assignment(identifier);
                 },
                 [&identifier](auto&&) -> node::Expr {
                     return node::Ident(identifier);
@@ -266,6 +256,17 @@ auto Parser::parse_return() -> node::Return {
     return node::Return{std::move(expression)};
 }
 
+auto Parser::parse_assignment(std::unique_ptr<node::Expr> lhs)
+    -> node::Assignment {
+    this->next_token().expect<token::Equals>();
+
+    auto rhs = std::make_unique<node::Expr>(this->parse_expr());
+
+    this->next_token().expect<token::Semicolon>();
+
+    return node::Assignment{std::move(lhs), std::move(rhs)};
+}
+
 auto Parser::parse_stmt() -> node::Stmt {
     const Token token = this->peek_token();
 
@@ -277,9 +278,21 @@ auto Parser::parse_stmt() -> node::Stmt {
             try {
                 node::Expr expr = this->parse_expr();
 
-                this->next_token().expect<token::Semicolon>();
+                return this->peek_token().visit(
+                    [this, &expr](token::Equals) -> node::Stmt {
+                        return this->parse_assignment(
+                            std::make_unique<node::Expr>(std::move(expr)));
+                    },
+                    [this, &expr](token::Semicolon) -> node::Stmt {
+                        this->next_token().expect<token::Semicolon>();
 
-                return expr;
+                        return std::move(expr);
+                    },
+                    [](auto&& arg) -> node::Stmt {
+                        throw error::UnexpectedToken(
+                            arg.description(), token::Equals::description(),
+                            token::Semicolon::description());
+                    });
             } catch (...) {
                 throw error::UnexpectedToken(arg.description(), "statement");
             }
@@ -297,11 +310,9 @@ auto Parser::parse_decl() -> node::Decl {
             return this->parse_function_decl();
         },
         [this](auto&&) -> node::Decl {
-            node::Expr factor = this->parse_factor();
+            node::Stmt stmt = this->parse_stmt();
 
-            this->next_token().expect<token::Semicolon>();
-
-            return factor;
+            return stmt;
         });
 
     return decl;

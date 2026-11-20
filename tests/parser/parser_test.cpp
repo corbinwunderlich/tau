@@ -30,7 +30,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"expr":{"function_call":{"ident":{"name":"main"},"params":[]}}}])"));
+                R"([{"stmt":{"expr":{"function_call":{"ident":{"name":"main"},"params":[]}}}}])"));
     }
 
     SECTION("parse function call with parameters") {
@@ -43,7 +43,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"expr":{"function_call":{"ident":{"name":"main"},"params":[{"integer":{"value":"1"}},{"integer":{"value":"2"}}]}}}])"));
+                R"([{"stmt":{"expr":{"function_call":{"ident":{"name":"main"},"params":[{"integer":{"value":"1"}},{"integer":{"value":"2"}}]}}}}])"));
     }
 
     SECTION("parse assignment") {
@@ -56,7 +56,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"expr":{"assignment":{"ident":{"name":"x"},"expr":{"integer":{"value":"2"}}}}}])"));
+                R"([{"stmt":{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"integer":{"value":"2"}}}}}])"));
     }
 
     SECTION("parse operator precedence") {
@@ -69,7 +69,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"expr":{"assignment":{"ident":{"name":"x"},"expr":{"add":{"lhs":{"integer":{"value":"2"}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}},"rhs":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}}}}}}}}}])"));
+                R"([{"stmt":{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"add":{"lhs":{"integer":{"value":"2"}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}},"rhs":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}}}}}}}}}])"));
     }
 
     SECTION("parse var declaration") {
