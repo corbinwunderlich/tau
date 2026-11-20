@@ -94,6 +94,7 @@
           packages = with pkgs; [clang cmake ninja pkg-config catch2_3] ++ config.pre-commit.settings.enabledPackages;
 
           CMAKE_GENERATOR = "Ninja";
+          CMAKE_COLOR_DIAGNOSTICS = true;
           CMAKE_C_COMPILER_LAUNCHER = "${pkgs.ccache}/bin/ccache";
           CMAKE_CXX_COMPILER_LAUNCHER = "${pkgs.ccache}/bin/ccache";
           CTEST_OUTPUT_ON_FAILURE = 1;
