@@ -316,8 +316,7 @@ class Stmt : public std::variant<Expr, Block, VarDecl, Return, Assignment>,
         -> void;
 };
 
-class Decl : public std::variant<VarDecl, FunctionDecl, Stmt>,
-             public Node<Decl> {
+class Decl : public std::variant<FunctionDecl, Stmt>, public Node<Decl> {
   public:
     using variant::variant;
 

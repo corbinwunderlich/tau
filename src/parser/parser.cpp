@@ -305,7 +305,6 @@ auto Parser::parse_decl() -> node::Decl {
     const Token token = this->peek_token();
 
     node::Decl decl = token.visit(
-        [this](token::Var) -> node::Decl { return this->parse_var_decl(); },
         [this](token::Func) -> node::Decl {
             return this->parse_function_decl();
         },

@@ -82,7 +82,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}])"));
+                R"([{"stmt":{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}}])"));
     }
 
     SECTION("parse function declaration without parameters") {
