@@ -4,7 +4,6 @@
 #include <ostream>
 #include <string_view>
 #include <tuple>
-#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -46,23 +45,8 @@
     X(Eof, "end of file", )
 
 namespace lexer::token {
-template <typename Derived>
-struct Token {
-  private:
-    Token() = default;
-
-  public:
-    friend Derived;
-
-    static constexpr auto description() noexcept {
-        return Derived::description();
-    }
-};
-
 #define TAU_DEFINE_TOKEN(Name, Description, ...)                           \
-    struct Name : public Token<Name> {                                     \
-        friend struct Token<Name>;                                         \
-                                                                           \
+    struct Name {                                                          \
         source::Span span;                                                 \
                                                                            \
         __VA_ARGS__                                                        \
@@ -132,9 +116,7 @@ class Token : public detail::TokenVariant {
             return std::get<T>(*this);
         } catch (std::bad_variant_access const& e) {
             return this->visit([](auto&& arg) -> T {
-                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-                throw error::UnexpectedToken(token.description(),
+                throw error::UnexpectedToken(arg.description(),
                                              T::description());
             });
         }
@@ -159,9 +141,7 @@ class Token : public detail::TokenVariant {
         }
 
         this->visit([](auto&& arg) -> void {
-            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-            throw error::UnexpectedToken(token.description(),
+            throw error::UnexpectedToken(arg.description(),
                                          (T::description(), ...));
         });
     }

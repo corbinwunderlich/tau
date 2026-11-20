@@ -74,7 +74,7 @@ auto lookup(source::Span span, std::string_view identifier) noexcept
 #define TAU_KEYWORDS_AS_SWITCH_CASE(type, lexeme, ...) \
     case hash(lexeme): {                               \
         if (matches(identifier, lexeme)) {             \
-            return lexer::token::type{{}, span};       \
+            return lexer::token::type{span};           \
         }                                              \
         break;                                         \
     }

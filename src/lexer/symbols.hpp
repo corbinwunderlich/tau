@@ -12,10 +12,9 @@ struct SymbolEntry {
     auto (*make)(source::Span) -> Token;
 };
 
-#define TAU_SYMBOL_ENTRY(Name, Lexeme, ...)              \
-    SymbolEntry{Lexeme, [](source::Span span) -> Token { \
-                    return token::Name{{}, span};        \
-                }},
+#define TAU_SYMBOL_ENTRY(Name, Lexeme, ...) \
+    SymbolEntry{Lexeme,                     \
+                [](source::Span span) -> Token { return token::Name{span}; }},
 
 inline constexpr std::array symbols = {TAU_SYMBOLS(TAU_SYMBOL_ENTRY)};
 

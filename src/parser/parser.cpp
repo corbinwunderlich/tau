@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <memory>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -16,7 +15,7 @@ namespace token = lexer::token;
 namespace parser {
 auto Parser::next_token() -> lexer::Token {
     if (pos_ >= tokens_.size()) {
-        return lexer::token::Eof{{}, source::Span{pos_}};
+        return lexer::token::Eof{source::Span{pos_}};
     }
 
     lexer::Token token = tokens_[pos_];
@@ -30,7 +29,7 @@ auto Parser::peek_token(size_t ahead) -> lexer::Token {
     const size_t index = pos_ + ahead;
 
     if (index >= tokens_.size()) {
-        return lexer::token::Eof{{}, source::Span{index}};
+        return lexer::token::Eof{source::Span{index}};
     }
 
     return tokens_[index];
@@ -116,9 +115,7 @@ auto Parser::parse_factor() -> node::Expr {
             return node::Group{std::move(expression)};
         },
         [](auto&& arg) -> node::Expr {
-            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-            throw error::UnexpectedToken(token.description(), "expression");
+            throw error::UnexpectedToken(arg.description(), "expression");
         });
 
     return factor;
@@ -146,9 +143,7 @@ auto Parser::parse_term() -> node::Expr {
             return node::Div{std::move(lhs), std::move(rhs)};
         },
         [](auto&& arg) -> node::Expr {
-            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-            throw error::UnexpectedToken(token.description(),
+            throw error::UnexpectedToken(arg.description(),
                                          token::Asterisk::description(),
                                          token::ForwardSlash::description());
         });
@@ -178,9 +173,7 @@ auto Parser::parse_expr() -> node::Expr {
             return node::Sub{std::move(lhs), std::move(rhs)};
         },
         [](auto&& arg) -> node::Expr {
-            const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-            throw error::UnexpectedToken(token.description(),
+            throw error::UnexpectedToken(arg.description(),
                                          token::Plus::description(),
                                          token::Minus::description());
         });
@@ -238,9 +231,7 @@ auto Parser::parse_function_decl() -> node::FunctionDecl {
             [](token::RightParen) -> bool { return true; },
             [](token::Comma) -> bool { return false; },
             [](auto&& arg) -> bool {
-                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-                throw error::UnexpectedToken(token.description(),
+                throw error::UnexpectedToken(arg.description(),
                                              token::RightParen::description(),
                                              token::Comma::description());
             });
@@ -290,9 +281,7 @@ auto Parser::parse_stmt() -> node::Stmt {
 
                 return expr;
             } catch (...) {
-                const token::Token<std::decay_t<decltype(arg)>>& token = arg;
-
-                throw error::UnexpectedToken(token.description(), "statement");
+                throw error::UnexpectedToken(arg.description(), "statement");
             }
         });
 

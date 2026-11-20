@@ -73,7 +73,7 @@ auto Lexer::lex() -> TokenStream {
         tokens.push_back(token);
     }
 
-    tokens.push_back(token::Eof{{}, source::Span{cursor_.pos()}});
+    tokens.push_back(token::Eof{source::Span{cursor_.pos()}});
 
     tokens.shrink_to_fit();
 
@@ -163,7 +163,7 @@ auto Lexer::read_word() noexcept -> Token {
     const source::Span span = this->span_from(start);
 
     if (is_upper(word.front())) {
-        return token::Type{{}, span, pool_->insert_ident(word)};
+        return token::Type{span, pool_->insert_ident(word)};
     }
 
     if (const std::optional<Token> keyword = keyword::lookup(span, word);
@@ -171,7 +171,7 @@ auto Lexer::read_word() noexcept -> Token {
         return *keyword;
     }
 
-    return token::Identifier{{}, span, pool_->insert_ident(word)};
+    return token::Identifier{span, pool_->insert_ident(word)};
 }
 
 auto Lexer::read_symbol() -> Token {
@@ -240,7 +240,7 @@ auto Lexer::read_number() -> Token {
         throw error::BadIntegerLiteral(base);
     }
 
-    return token::IntegerLiteral{{}, this->span_from(start), value};
+    return token::IntegerLiteral{this->span_from(start), value};
 }
 
 auto Lexer::read_string() -> Token {
@@ -270,8 +270,8 @@ auto Lexer::read_string() -> Token {
         value.push_back(*character);
     }
 
-    return token::StringLiteral{
-        {}, this->span_from(start), pool_->insert_string(value)};
+    return token::StringLiteral{this->span_from(start),
+                                pool_->insert_string(value)};
 }
 
 auto Lexer::read_character() -> Token {
@@ -301,7 +301,7 @@ auto Lexer::read_character() -> Token {
                                      "'");
     }
 
-    return token::CharacterLiteral{{}, this->span_from(start), value};
+    return token::CharacterLiteral{this->span_from(start), value};
 }
 
 auto Lexer::next_token() -> Token {
