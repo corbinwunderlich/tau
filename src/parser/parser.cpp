@@ -188,17 +188,6 @@ auto Parser::parse_block() -> node::Block {
     return node::Block{std::move(statements)};
 }
 
-auto Parser::parse_var_decl() -> node::VarDecl {
-    this->next_token().expect<token::Var>();
-
-    const auto ident = this->next_token().get<token::Identifier>();
-    const auto type = this->next_token().get<token::Type>();
-
-    this->next_token().expect<token::Semicolon>();
-
-    return node::VarDecl{node::Ident(ident), node::Type(type)};
-}
-
 auto Parser::parse_function_decl() -> node::FunctionDecl {
     this->next_token().expect<token::Func>();
 
@@ -250,6 +239,17 @@ auto Parser::parse_function_decl() -> node::FunctionDecl {
                               return_type, this->parse_block()};
 }
 
+auto Parser::parse_var_decl() -> node::VarDecl {
+    this->next_token().expect<token::Var>();
+
+    const auto ident = this->next_token().get<token::Identifier>();
+    const auto type = this->next_token().get<token::Type>();
+
+    this->next_token().expect<token::Semicolon>();
+
+    return node::VarDecl{node::Ident(ident), node::Type(type)};
+}
+
 auto Parser::parse_return() -> node::Return {
     this->next_token().expect<token::Return>();
 
@@ -276,6 +276,9 @@ auto Parser::parse_stmt() -> node::Stmt {
 
     node::Stmt statement = token.visit(
         [this](token::LeftBrace) -> node::Stmt { return this->parse_block(); },
+        [this](token::Func) -> node::Stmt {
+            return this->parse_function_decl();
+        },
         [this](token::Var) -> node::Stmt { return this->parse_var_decl(); },
         [this](token::Return) -> node::Stmt { return this->parse_return(); },
         [this](auto&& arg) -> node::Stmt {
@@ -305,24 +308,8 @@ auto Parser::parse_stmt() -> node::Stmt {
     return statement;
 }
 
-auto Parser::parse_decl() -> node::Decl {
-    const Token token = this->peek_token();
-
-    node::Decl decl = token.visit(
-        [this](token::Func) -> node::Decl {
-            return this->parse_function_decl();
-        },
-        [this](auto&&) -> node::Decl {
-            node::Stmt stmt = this->parse_stmt();
-
-            return stmt;
-        });
-
-    return decl;
-}
-
 auto Parser::parse() -> ast::Ast {
-    std::vector<node::Decl> nodes;
+    std::vector<node::Stmt> nodes;
 
     while (pos_ < tokens_.size()) {
         if (pos_ == tokens_.size() - 1) {
@@ -331,7 +318,7 @@ auto Parser::parse() -> ast::Ast {
             break;
         }
 
-        nodes.push_back(this->parse_decl());
+        nodes.push_back(this->parse_stmt());
     }
 
     nodes.shrink_to_fit();

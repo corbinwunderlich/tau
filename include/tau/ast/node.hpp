@@ -308,16 +308,10 @@ class Assignment : public Node<Assignment> {
         -> void;
 };
 
-class Stmt : public std::variant<Expr, Block, VarDecl, Return, Assignment>,
-             public Node<Stmt> {
-  public:
-    using variant::variant;
-
-    auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
-        -> void;
-};
-
-class Decl : public std::variant<FunctionDecl, Stmt>, public Node<Decl> {
+class Stmt
+    : public std::
+          variant<Expr, Block, FunctionDecl, VarDecl, Return, Assignment>,
+      public Node<Stmt> {
   public:
     using variant::variant;
 

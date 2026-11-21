@@ -61,10 +61,10 @@ class Parser {
     auto parse_block() -> ast::node::Block;
 
     [[nodiscard]]
-    auto parse_var_decl() -> ast::node::VarDecl;
+    auto parse_function_decl() -> ast::node::FunctionDecl;
 
     [[nodiscard]]
-    auto parse_function_decl() -> ast::node::FunctionDecl;
+    auto parse_var_decl() -> ast::node::VarDecl;
 
     [[nodiscard]]
     auto parse_return() -> ast::node::Return;
@@ -75,8 +75,5 @@ class Parser {
 
     [[nodiscard]]
     auto parse_stmt() -> ast::node::Stmt;
-
-    [[nodiscard]]
-    auto parse_decl() -> ast::node::Decl;
 };
 }  // namespace parser

@@ -229,35 +229,14 @@ auto Stmt::dump(const lexer::Pool& pool,
                 stream << R"("expr":)";
             } else if constexpr (std::is_same_v<T, Block>) {
                 stream << R"("block":)";
+            } else if constexpr (std::is_same_v<T, FunctionDecl>) {
+                stream << R"("function_decl":)";
             } else if constexpr (std::is_same_v<T, VarDecl>) {
                 stream << R"("var_decl":)";
             } else if constexpr (std::is_same_v<T, Return>) {
                 stream << R"("return":)";
             } else if constexpr (std::is_same_v<T, Assignment>) {
                 stream << R"("assignment":)";
-            }
-
-            static_cast<const Node<T>&>(node).dump(pool, stream);
-        },
-        *this);
-
-    stream << '}';
-}
-
-auto Decl::dump(const lexer::Pool& pool,
-                std::stringstream& stream) const noexcept -> void {
-    stream << '{';
-
-    std::visit(
-        [&pool, &stream](auto&& node) -> void {
-            using T = std::decay_t<decltype(node)>;
-
-            if constexpr (std::is_same_v<T, VarDecl>) {
-                stream << R"("var_decl":)";
-            } else if constexpr (std::is_same_v<T, FunctionDecl>) {
-                stream << R"("function_decl":)";
-            } else if constexpr (std::is_same_v<T, Stmt>) {
-                stream << R"("stmt":)";
             }
 
             static_cast<const Node<T>&>(node).dump(pool, stream);

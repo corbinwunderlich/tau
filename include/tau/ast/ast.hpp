@@ -6,7 +6,7 @@
 
 namespace ast {
 struct Ast {
-    std::vector<node::Decl> nodes;
+    std::vector<node::Stmt> nodes;
 
     [[nodiscard]]
     auto dump(const lexer::Pool& pool) const noexcept -> std::stringstream;

@@ -1,16 +1,14 @@
 /* Syntax */
 
-Ast ::= Decl+
-
-Decl         ::= Stmt
-               | FunctionDecl
-FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE? Block
+Ast ::= Stmt+
 
 Stmt       ::= Block
+             | FunctionDecl
              | VarDecl
              | Return
              | Assignment
 Block      ::= "{" Stmt* "}"
+FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE? Block
 VarDecl    ::= "var" IDENT TYPE ";"
 Return     ::= "return" Expr ";"
 Assignment ::= Expr "=" Expr ";"

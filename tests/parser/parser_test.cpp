@@ -30,7 +30,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"stmt":{"expr":{"function_call":{"ident":{"name":"main"},"params":[]}}}}])"));
+                R"([{"expr":{"function_call":{"ident":{"name":"main"},"params":[]}}}])"));
     }
 
     SECTION("parse function call with parameters") {
@@ -43,7 +43,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"stmt":{"expr":{"function_call":{"ident":{"name":"main"},"params":[{"integer":{"value":"1"}},{"integer":{"value":"2"}}]}}}}])"));
+                R"([{"expr":{"function_call":{"ident":{"name":"main"},"params":[{"integer":{"value":"1"}},{"integer":{"value":"2"}}]}}}])"));
     }
 
     SECTION("parse assignment") {
@@ -56,7 +56,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"stmt":{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"integer":{"value":"2"}}}}}])"));
+                R"([{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"integer":{"value":"2"}}}}])"));
     }
 
     SECTION("parse operator precedence") {
@@ -69,7 +69,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"stmt":{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"add":{"lhs":{"integer":{"value":"2"}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}},"rhs":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}}}}}}}}}])"));
+                R"([{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"add":{"lhs":{"integer":{"value":"2"}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}},"rhs":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}}}}}}}}])"));
     }
 
     SECTION("parse var declaration") {
@@ -82,7 +82,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
         REQUIRE_THAT(
             ast.dump(*lexer.pool()).str(),
             Equals(
-                R"([{"stmt":{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}}])"));
+                R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}])"));
     }
 
     SECTION("parse function declaration without parameters") {
