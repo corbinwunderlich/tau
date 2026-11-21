@@ -269,6 +269,12 @@ auto Parser::parse_var_decl() -> node::VarDecl {
 auto Parser::parse_return() -> node::Return {
     this->next_token().expect<token::Return>();
 
+    if (this->peek_token().is<token::Semicolon>()) {
+        this->next_token();
+
+        return node::Return{nullptr};
+    }
+
     auto expression = std::make_unique<node::Expr>(this->parse_expr());
 
     this->next_token().expect<token::Semicolon>();

@@ -207,7 +207,13 @@ auto FunctionDecl::dump(const lexer::Pool& pool,
 auto Return::dump(const lexer::Pool& pool,
                   std::stringstream& stream) const noexcept -> void {
     stream << R"({"expr":)";
-    expr_->dump(pool, stream);
+
+    if (expr_ != nullptr) {
+        expr_->dump(pool, stream);
+    } else {
+        stream << "null";
+    }
+
     stream << '}';
 }
 

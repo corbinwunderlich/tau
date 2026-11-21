@@ -136,4 +136,27 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
             Equals(
                 R"([{"function_decl":{"ident":{"name":"add"},"params":[{"ident":{"name":"first"},"type":{"name":"First"}},{"ident":{"name":"second"},"type":{"name":"Second"}}],"return_type":{"name":"Return"},"body":{"statements":[]}}}])"));
     }
+
+    SECTION("parse return without expression") {
+        Lexer lexer{"return;"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(ast.dump(*lexer.pool()).str(),
+                     Equals(R"([{"return":{"expr":null}}])"));
+    }
+
+    SECTION("parse return with expression") {
+        Lexer lexer{"return 0;"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(R"([{"return":{"expr":{"integer":{"value":"0"}}}}])"));
+    }
 }

@@ -10,7 +10,7 @@ Stmt         ::= Block
 Block        ::= "{" Stmt* "}"
 FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE? Block
 VarDecl      ::= "var" IDENT TYPE ("=" Expr)? ";"
-Return       ::= "return" Expr ";"
+Return       ::= "return" Expr? ";"
 Assignment   ::= Expr "=" Expr ";"
 
 Expr         ::= Term (("+" | "-") Term)*
