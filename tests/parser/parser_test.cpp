@@ -98,6 +98,19 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
                 R"([{"function_decl":{"ident":{"name":"main"},"params":[],"return_type":{"name":"Void"},"body":{"statements":[]}}}])"));
     }
 
+    SECTION("parse function declaration without return type") {
+        Lexer lexer{"func main() { }"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"function_decl":{"ident":{"name":"main"},"params":[],"return_type":null,"body":{"statements":[]}}}])"));
+    }
+
     SECTION("parse function declaration with parameters") {
         Lexer lexer{"func add(first First, second Second) Return { }"};
         Parser parser{lexer};

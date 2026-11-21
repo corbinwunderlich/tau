@@ -4,7 +4,7 @@ Ast ::= Decl+
 
 Decl         ::= Stmt
                | FunctionDecl
-FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE Block
+FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE? Block
 
 Stmt       ::= Block
              | VarDecl

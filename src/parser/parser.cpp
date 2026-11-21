@@ -1,6 +1,7 @@
 #include <cassert>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -240,10 +241,13 @@ auto Parser::parse_function_decl() -> node::FunctionDecl {
 
     params.shrink_to_fit();
 
-    const auto return_type = this->next_token().get<token::Type>();
+    const auto return_type =
+        this->peek_token().is<token::Type>()
+            ? std::optional(node::Type(this->next_token().get<token::Type>()))
+            : std::nullopt;
 
     return node::FunctionDecl{node::Ident(ident), std::move(params),
-                              node::Type(return_type), this->parse_block()};
+                              return_type, this->parse_block()};
 }
 
 auto Parser::parse_return() -> node::Return {

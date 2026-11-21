@@ -26,24 +26,24 @@ auto StringLiteral::dump(const lexer::Pool& pool,
 
 auto CharacterLiteral::dump(const Pool& /*pool*/,
                             std::stringstream& stream) const noexcept -> void {
-    stream << R"({"value":")" << this->value_ << R"("})";
+    stream << R"({"value":")" << value_ << R"("})";
 }
 
 auto IntegerLiteral::dump(const Pool& /*pool*/,
                           std::stringstream& stream) const noexcept -> void {
-    stream << R"({"value":")" << this->value_ << R"("})";
+    stream << R"({"value":")" << value_ << R"("})";
 }
 
 auto FunctionCall::dump(const lexer::Pool& pool,
                         std::stringstream& stream) const noexcept -> void {
     stream << R"({"ident":)";
-    this->ident_.dump(pool, stream);
+    ident_.dump(pool, stream);
 
     stream << R"(,"params":[)";
-    for (size_t i = 0; i < this->params_.size(); i++) {
-        this->params_[i].dump(pool, stream);
+    for (size_t i = 0; i < params_.size(); i++) {
+        params_[i].dump(pool, stream);
 
-        if (i != this->params_.size() - 1) {
+        if (i != params_.size() - 1) {
             stream << ',';
         }
     }
@@ -53,17 +53,17 @@ auto FunctionCall::dump(const lexer::Pool& pool,
 auto Group::dump(const lexer::Pool& pool,
                  std::stringstream& stream) const noexcept -> void {
     stream << R"({"expr":)";
-    this->expr_->dump(pool, stream);
+    expr_->dump(pool, stream);
     stream << '}';
 }
 
 auto Mult::dump(const lexer::Pool& pool,
                 std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_->dump(pool, stream);
+    lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
-    this->rhs_->dump(pool, stream);
+    rhs_->dump(pool, stream);
 
     stream << '}';
 }
@@ -71,10 +71,10 @@ auto Mult::dump(const lexer::Pool& pool,
 auto Div::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_->dump(pool, stream);
+    lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
-    this->rhs_->dump(pool, stream);
+    rhs_->dump(pool, stream);
 
     stream << '}';
 }
@@ -82,10 +82,10 @@ auto Div::dump(const lexer::Pool& pool,
 auto Add::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_->dump(pool, stream);
+    lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
-    this->rhs_->dump(pool, stream);
+    rhs_->dump(pool, stream);
 
     stream << '}';
 }
@@ -93,10 +93,10 @@ auto Add::dump(const lexer::Pool& pool,
 auto Sub::dump(const lexer::Pool& pool,
                std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_->dump(pool, stream);
+    lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
-    this->rhs_->dump(pool, stream);
+    rhs_->dump(pool, stream);
 
     stream << '}';
 }
@@ -144,10 +144,10 @@ auto Block::dump(const lexer::Pool& pool,
                  std::stringstream& stream) const noexcept -> void {
     stream << R"({"statements":[)";
 
-    for (size_t i = 0; i < this->statements_.size(); i++) {
-        this->statements_[i].dump(pool, stream);
+    for (size_t i = 0; i < statements_.size(); i++) {
+        statements_[i].dump(pool, stream);
 
-        if (i != this->statements_.size() - 1) {
+        if (i != statements_.size() - 1) {
             stream << ',';
         }
     }
@@ -158,10 +158,10 @@ auto Block::dump(const lexer::Pool& pool,
 auto VarDecl::dump(const lexer::Pool& pool,
                    std::stringstream& stream) const noexcept -> void {
     stream << R"({"ident":)";
-    this->ident_.dump(pool, stream);
+    ident_.dump(pool, stream);
 
     stream << R"(,"type":)";
-    this->type_.dump(pool, stream);
+    type_.dump(pool, stream);
 
     stream << '}';
 }
@@ -169,28 +169,32 @@ auto VarDecl::dump(const lexer::Pool& pool,
 auto FunctionDecl::dump(const lexer::Pool& pool,
                         std::stringstream& stream) const noexcept -> void {
     stream << R"({"ident":)";
-    this->ident_.dump(pool, stream);
+    ident_.dump(pool, stream);
 
     stream << R"(,"params":[)";
-    for (size_t i = 0; i < this->params_.size(); i++) {
+    for (size_t i = 0; i < params_.size(); i++) {
         stream << R"({"ident":)";
-        this->params_[i].ident().dump(pool, stream);
+        params_[i].ident().dump(pool, stream);
 
         stream << R"(,"type":)";
-        this->params_[i].type().dump(pool, stream);
+        params_[i].type().dump(pool, stream);
 
         stream << '}';
 
-        if (i != this->params_.size() - 1) {
+        if (i != params_.size() - 1) {
             stream << ',';
         }
     }
 
     stream << R"(],"return_type":)";
-    this->return_type_.dump(pool, stream);
+    if (return_type_.has_value()) {
+        return_type_->dump(pool, stream);
+    } else {
+        stream << "null";
+    }
 
     stream << R"(,"body":)";
-    this->body_.dump(pool, stream);
+    body_.dump(pool, stream);
 
     stream << '}';
 }
@@ -198,17 +202,17 @@ auto FunctionDecl::dump(const lexer::Pool& pool,
 auto Return::dump(const lexer::Pool& pool,
                   std::stringstream& stream) const noexcept -> void {
     stream << R"({"expr":)";
-    this->expr_->dump(pool, stream);
+    expr_->dump(pool, stream);
     stream << '}';
 }
 
 auto Assignment::dump(const lexer::Pool& pool,
                       std::stringstream& stream) const noexcept -> void {
     stream << R"({"lhs":)";
-    this->lhs_->dump(pool, stream);
+    lhs_->dump(pool, stream);
 
     stream << R"(,"rhs":)";
-    this->rhs_->dump(pool, stream);
+    rhs_->dump(pool, stream);
 
     stream << '}';
 }

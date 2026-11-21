@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string_view>
 #include <utility>
@@ -266,7 +267,7 @@ class FunctionDecl : public Node<FunctionDecl> {
 
     FunctionDecl(Ident ident,
                  std::vector<Param> params,
-                 Type return_type,
+                 std::optional<Type> return_type,
                  Block body)
         : ident_(ident),
           params_(std::move(params)),
@@ -279,7 +280,7 @@ class FunctionDecl : public Node<FunctionDecl> {
   private:
     Ident ident_;
     std::vector<Param> params_;
-    Type return_type_;
+    std::optional<Type> return_type_;
     Block body_;
 };
 
