@@ -245,9 +245,25 @@ auto Parser::parse_var_decl() -> node::VarDecl {
     const auto ident = this->next_token().get<token::Identifier>();
     const auto type = this->next_token().get<token::Type>();
 
-    this->next_token().expect<token::Semicolon>();
+    std::optional<node::Expr> definition = this->next_token().visit(
+        [this](token::Equals) -> std::optional<node::Expr> {
+            node::Expr expr = this->parse_expr();
 
-    return node::VarDecl{node::Ident(ident), node::Type(type)};
+            this->next_token().expect<token::Semicolon>();
+
+            return expr;
+        },
+        [](token::Semicolon) -> std::optional<node::Expr> {
+            return std::nullopt;
+        },
+        [](auto&& arg) -> std::optional<node::Expr> {
+            throw error::UnexpectedToken(arg.description(),
+                                         token::Equals::description(),
+                                         token::Semicolon::description());
+        });
+
+    return node::VarDecl{node::Ident(ident), node::Type(type),
+                         std::move(definition)};
 }
 
 auto Parser::parse_return() -> node::Return {

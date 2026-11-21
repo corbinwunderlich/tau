@@ -72,7 +72,7 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
                 R"([{"assignment":{"lhs":{"ident":{"name":"x"}},"rhs":{"add":{"lhs":{"integer":{"value":"2"}},"rhs":{"sub":{"lhs":{"div":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}},"rhs":{"mult":{"lhs":{"integer":{"value":"2"}},"rhs":{"integer":{"value":"2"}}}}}}}}}}])"));
     }
 
-    SECTION("parse var declaration") {
+    SECTION("parse var declaration without definition") {
         Lexer lexer{"var x Int;"};
         Parser parser{lexer};
 
@@ -83,6 +83,19 @@ TEST_CASE("Parser correctly constructs AST", "[Parser]") {
             ast.dump(*lexer.pool()).str(),
             Equals(
                 R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"}}}])"));
+    }
+
+    SECTION("parse var declaration with definition") {
+        Lexer lexer{"var x Int = 0;"};
+        Parser parser{lexer};
+
+        ast::Ast ast;
+
+        REQUIRE_NOTHROW(ast = parser.parse());
+        REQUIRE_THAT(
+            ast.dump(*lexer.pool()).str(),
+            Equals(
+                R"([{"var_decl":{"ident":{"name":"x"},"type":{"name":"Int"},"definition":{"integer":{"value":"0"}}}}])"));
     }
 
     SECTION("parse function declaration without parameters") {

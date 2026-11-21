@@ -163,6 +163,11 @@ auto VarDecl::dump(const lexer::Pool& pool,
     stream << R"(,"type":)";
     type_.dump(pool, stream);
 
+    if (definition_.has_value()) {
+        stream << R"(,"definition":)";
+        definition_->dump(pool, stream);
+    }
+
     stream << '}';
 }
 

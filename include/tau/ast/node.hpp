@@ -231,8 +231,11 @@ class VarDecl : public Node<VarDecl> {
     Ident ident_;
     Type type_;
 
+    std::optional<Expr> definition_;
+
   public:
-    VarDecl(Ident ident, Type type) : ident_(ident), type_(type) {}
+    VarDecl(Ident ident, Type type, std::optional<Expr> definition)
+        : ident_(ident), type_(type), definition_(std::move(definition)) {}
 
     auto dump(const lexer::Pool& pool, std::stringstream& stream) const noexcept
         -> void;

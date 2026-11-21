@@ -2,16 +2,16 @@
 
 Ast ::= Stmt+
 
-Stmt       ::= Block
-             | FunctionDecl
-             | VarDecl
-             | Return
-             | Assignment
-Block      ::= "{" Stmt* "}"
+Stmt         ::= Block
+               | FunctionDecl
+               | VarDecl
+               | Return
+               | Assignment
+Block        ::= "{" Stmt* "}"
 FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE? Block
-VarDecl    ::= "var" IDENT TYPE ";"
-Return     ::= "return" Expr ";"
-Assignment ::= Expr "=" Expr ";"
+VarDecl      ::= "var" IDENT TYPE ("=" Expr)? ";"
+Return       ::= "return" Expr ";"
+Assignment   ::= Expr "=" Expr ";"
 
 Expr         ::= Term (("+" | "-") Term)*
 Term         ::= Factor (("*" | "/") Factor)*
