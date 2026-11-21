@@ -1,18 +1,39 @@
+/* Syntax */
+
+Ast ::= Decl+
+
+Decl         ::= Stmt
+               | FunctionDecl
+FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE Block
+
+Stmt       ::= Block
+             | VarDecl
+             | Return
+             | Assignment
+Block      ::= "{" Stmt* "}"
+VarDecl    ::= "var" IDENT TYPE ";"
+Return     ::= "return" Expr ";"
+Assignment ::= Expr "=" Expr ";"
+
+Expr         ::= Term (("+" | "-") Term)*
+Term         ::= Factor (("*" | "/") Factor)*
+Factor       ::= FunctionCall
+               | IDENT
+               | STRING_LITERAL
+               | CHARACTER_LITERAL
+               | INTEGER_LITERAL
+               | Group
+FunctionCall ::= IDENT "(" (Expr ("," Expr)*)? ")"
+Group        ::= "(" Expr ")"
+
+/* Lexical tokens */
+
 Char     ::= #x9 | #xA | #xD | [#x20-#x10FFFF]
 HexDigit ::= [0-9a-fA-F]
-Escape   ::= "\" ("0" | "a" | "b" | "n" | "t" | "r" | "\" | "'" | '"')
-           | "\x" HexDigit HexDigit
-
-Newline ::= #xD #xA | #xA | #xD
+Newline  ::= #xD #xA | #xA | #xD
 
 TYPE  ::= [A-Z][a-zA-Z0-9]*
 IDENT ::= [a-z][a-zA-Z0-9]*
-
-STRING_LITERAL ::= '"' (StringChar | Escape)* '"'
-StringChar     ::= Char - ('"' | "\")
-
-CHARACTER_LITERAL ::= "'" (CharChar | Escape) "'"
-CharChar          ::= Char - ("'" | "\" | Newline)
 
 INTEGER_LITERAL    ::= DecimalLiteral
                      | HexadecimalLiteral
@@ -23,29 +44,8 @@ HexadecimalLiteral ::= "0" [xX] HexDigit+
 OctalLiteral       ::= "0" [oO] [0-7]+
 BinaryLiteral      ::= "0" [bB] [01]+
 
-FunctionCall ::= IDENT "(" (Expr ("," Expr)*)? ")"
-Group        ::= "(" Expr ")"
-Factor       ::= FunctionCall
-               | IDENT
-               | STRING_LITERAL
-               | CHARACTER_LITERAL
-               | INTEGER_LITERAL
-               | Group
+STRING_LITERAL    ::= '"' (Char - ('"' | "\") | Escape)* '"'
+CHARACTER_LITERAL ::= "'" (Char - ("'" | "\" | Newline) | Escape) "'"
 
-Term ::= Factor (("*" | "/") Factor)*
-Expr ::= Term (("+" | "-") Term)*
-
-Block      ::= "{" Stmt* "}"
-VarDecl    ::= "var" IDENT TYPE ";"
-Return     ::= "return" Expr ";"
-Assignment ::= Expr "=" Expr ";"
-Stmt       ::= Block
-             | VarDecl
-             | Return 
-             | Assignment
-
-FunctionDecl ::= "func" IDENT "(" (IDENT TYPE ("," IDENT TYPE)*)? ")" TYPE Block
-Decl         ::= Stmt
-               | FunctionDecl
-
-Ast ::= Decl+
+Escape ::= "\" ("0" | "a" | "b" | "n" | "t" | "r" | "\" | "'" | '"')
+         | "\x" HexDigit HexDigit
